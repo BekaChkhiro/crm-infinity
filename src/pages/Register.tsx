@@ -41,13 +41,13 @@ export default function Register() {
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Invalid email address';
     }
 
     if (!password) {
       newErrors.password = 'Password is required';
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = 'Password must be at least 8 characters long';
     }
 
     if (!confirmPassword) {
@@ -80,7 +80,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
           <CardDescription className="text-center">
             Enter your information to get started
           </CardDescription>
@@ -178,7 +178,7 @@ export default function Register() {
                   Creating account...
                 </>
               ) : (
-                'Create account'
+                'Create Account'
               )}
             </Button>
           </form>
@@ -187,7 +187,7 @@ export default function Register() {
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
+                Sign In
               </Link>
             </p>
           </div>

@@ -37,25 +37,25 @@ export default function ChangePassword() {
     } = {};
 
     if (!currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
+      newErrors.currentPassword = 'მიმდინარე პაროლი აუცილებელია';
     }
 
     if (!newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = 'ახალი პაროლი აუცილებელია';
     } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
+      newErrors.newPassword = 'პაროლი უნდა იყოს მინიმუმ 8 სიმბოლო';
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
-      newErrors.newPassword = 'Password must contain uppercase, lowercase, and number';
+      newErrors.newPassword = 'პაროლი უნდა შეიცავდეს მთავრულ, პატარა ბღერას და რიცხვს';
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
+      newErrors.confirmPassword = 'გთხოვთ დაადასტუროთ ახალი პაროლი';
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'პაროლები არ ერთმანეთ';
     }
 
     if (currentPassword && newPassword && currentPassword === newPassword) {
-      newErrors.newPassword = 'New password must be different from current password';
+      newErrors.newPassword = 'ახალი პაროლი უნდა განსხვავდებოდეს მიმდინარესაგან';
     }
 
     setErrors(newErrors);
@@ -77,7 +77,7 @@ export default function ChangePassword() {
       });
 
       if (verifyError) {
-        setErrors({ currentPassword: 'Current password is incorrect' });
+        setErrors({ currentPassword: 'მიმდინარე პაროლი არასწორია' });
         setLoading(false);
         return;
       }
@@ -91,8 +91,8 @@ export default function ChangePassword() {
 
       setSuccess(true);
       toast({
-        title: "Password Changed",
-        description: "Your password has been updated successfully.",
+        title: "პაროლი შეცვალდა",
+        description: "თქვენი პაროლი წარმატებით განაინრინდა.",
       });
 
       // Clear form
@@ -104,8 +104,8 @@ export default function ChangePassword() {
       console.error('Error changing password:', error);
       toast({
         variant: "destructive",
-        title: "Password Change Failed",
-        description: error.message || "Failed to change password.",
+        title: "პაროლის შეცვლა ვერ მოხერხდა",
+        description: error.message || "პაროლის შეცვლა ვერ მოხერხდა.",
       });
     } finally {
       setLoading(false);
@@ -123,11 +123,11 @@ export default function ChangePassword() {
   };
 
   const passwordRequirements = [
-    { text: 'At least 8 characters', met: newPassword.length >= 8 },
-    { text: 'Contains uppercase letter', met: /[A-Z]/.test(newPassword) },
-    { text: 'Contains lowercase letter', met: /[a-z]/.test(newPassword) },
-    { text: 'Contains number', met: /[0-9]/.test(newPassword) },
-    { text: 'Contains special character', met: /[^A-Za-z0-9]/.test(newPassword) },
+    { text: 'მინიმუმ 8 სიმბოლო', met: newPassword.length >= 8 },
+    { text: 'შეიცავს მთავრულ ბღერას', met: /[A-Z]/.test(newPassword) },
+    { text: 'შეიცავს პატარა ბღერას', met: /[a-z]/.test(newPassword) },
+    { text: 'შეიცავს რიცხვს', met: /[0-9]/.test(newPassword) },
+    { text: 'შეიცავს სპეციალურ სიმბოლოს', met: /[^A-Za-z0-9]/.test(newPassword) },
   ];
 
   if (success) {
@@ -139,7 +139,7 @@ export default function ChangePassword() {
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  დაბრუნება
                 </Button>
               </Link>
             </div>
@@ -153,24 +153,24 @@ export default function ChangePassword() {
                 <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
-                <CardTitle className="text-2xl">Password Changed</CardTitle>
+                <CardTitle className="text-2xl">პაროლი შეცვალდა</CardTitle>
                 <CardDescription>
-                  Your password has been updated successfully. You're now more secure!
+                  თქვენი პაროლი წარმატებით განაიხლა! ახლა უფრო უსაფრთხო ხართ!
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-left space-y-2">
-                  <h4 className="font-medium text-sm">Security Tips:</h4>
+                  <h4 className="font-medium text-sm">უსაფრთხოების რჩევები:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Don't share your password with anyone</li>
-                    <li>• Use a unique password for each account</li>
-                    <li>• Consider using a password manager</li>
-                    <li>• Change passwords regularly</li>
+                    <li>• არ გაუზიაროთ თქვენი პაროლი არავის</li>
+                    <li>• იყენეთ უნიკალური პაროლი თითოეული ანგარიშისთვის</li>
+                    <li>• გაიაროთ პაროლების მენეჯერი</li>
+                    <li>• რეგულარულად შეცვალეთ პაროლები</li>
                   </ul>
                 </div>
                 <Link to="/dashboard">
                   <Button className="w-full">
-                    Return to Dashboard
+                    დაბრუნება
                   </Button>
                 </Link>
               </CardContent>
@@ -190,13 +190,13 @@ export default function ChangePassword() {
             <Link to="/dashboard">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                უკან
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-semibold">Change Password</h1>
+              <h1 className="text-xl font-semibold">პაროლის შეცვლა</h1>
               <p className="text-sm text-muted-foreground">
-                Update your password to keep your account secure
+                განაახლეთ თქვენი პაროლი ანგარიშის უსაფრთხოებისთვის
               </p>
             </div>
           </div>
@@ -212,9 +212,9 @@ export default function ChangePassword() {
               <div className="flex items-start space-x-3">
                 <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-blue-900">Password Security</h3>
+                  <h3 className="font-medium text-blue-900">პაროლის უსაფრთხოება</h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Choose a strong password that you haven't used elsewhere. A good password should be unique and hard to guess.
+                    აირჩიეთ ძლიერი პაროლი, რომელიც არ გამოგეიყენეთ სხვა ადგილას. კარგი პაროლი უნდა იყოს უნიკალური და ძნელად გამოსაცნობი.
                   </p>
                 </div>
               </div>
@@ -224,16 +224,16 @@ export default function ChangePassword() {
           {/* Change Password Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Update Password</CardTitle>
+              <CardTitle>პაროლის განახლება</CardTitle>
               <CardDescription>
-                Enter your current password and choose a new secure password
+                შეიყვანეთ მიმდინარე პაროლი და აირჩიეთ ახალი უსაფრთხო პაროლი
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Current Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword">მიმდინარე პაროლი</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
@@ -247,7 +247,7 @@ export default function ChangePassword() {
                         }
                       }}
                       className={`pl-10 pr-10 ${errors.currentPassword ? 'border-destructive' : ''}`}
-                      placeholder="Enter your current password"
+                      placeholder="შეიყვანეთ მიმდინარე პაროლი"
                     />
                     <button
                       type="button"
@@ -264,7 +264,7 @@ export default function ChangePassword() {
 
                 {/* New Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">ახალი პაროლი</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
@@ -278,7 +278,7 @@ export default function ChangePassword() {
                         }
                       }}
                       className={`pl-10 pr-10 ${errors.newPassword ? 'border-destructive' : ''}`}
-                      placeholder="Enter your new password"
+                      placeholder="შეიყვანეთ ახალი პაროლი"
                     />
                     <button
                       type="button"
@@ -297,7 +297,7 @@ export default function ChangePassword() {
                 {/* Password Requirements */}
                 {newPassword && (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Password Requirements:</h4>
+                    <h4 className="text-sm font-medium">პაროლის მოთხოვნები:</h4>
                     <div className="space-y-1">
                       {passwordRequirements.map((req, index) => (
                         <div key={index} className="flex items-center space-x-2 text-sm">
@@ -313,7 +313,7 @@ export default function ChangePassword() {
 
                 {/* Confirm Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword">ახალი პაროლის დადასტურება</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
@@ -327,7 +327,7 @@ export default function ChangePassword() {
                         }
                       }}
                       className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-destructive' : ''}`}
-                      placeholder="Confirm your new password"
+                      placeholder="დაადასტურეთ ახალი პაროლი"
                     />
                     <button
                       type="button"
@@ -350,10 +350,10 @@ export default function ChangePassword() {
                   {loading ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
-                      Updating Password...
+                      პაროლი იცვლება...
                     </>
                   ) : (
-                    'Update Password'
+                    'პაროლის განახლება'
                   )}
                 </Button>
               </form>

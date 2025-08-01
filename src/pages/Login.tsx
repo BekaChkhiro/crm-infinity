@@ -30,7 +30,7 @@ export default function Login() {
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Invalid email address';
     }
 
     if (!password) {
@@ -62,7 +62,7 @@ export default function Login() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Enter your credentials to sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -150,7 +150,7 @@ export default function Login() {
                   Signing in...
                 </>
               ) : (
-                'Sign in'
+                'Sign In'
               )}
             </Button>
           </form>
@@ -159,7 +159,7 @@ export default function Login() {
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link to="/register" className="text-primary hover:underline font-medium">
-                Sign up
+                Sign Up
               </Link>
             </p>
           </div>

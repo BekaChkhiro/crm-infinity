@@ -629,7 +629,7 @@ export default function ProjectDetails() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.teamMembers}</div>
-                  <p className="text-xs text-muted-foreground">Active contributors</p>
+                  <p className="text-xs text-muted-foreground">Active Contributors</p>
                 </CardContent>
               </Card>
 
@@ -640,10 +640,10 @@ export default function ProjectDetails() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {project.start_date ? format(new Date(project.start_date), 'MMM dd') : 'Not set'}
+                    {project.start_date ? format(new Date(project.start_date), 'MMM dd') : 'Not Set'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {project.end_date ? `Ends ${format(new Date(project.end_date), 'MMM dd, yyyy')}` : 'No end date'}
+                    {project.end_date ? `Ends ${format(new Date(project.end_date), 'MMM dd, yyyy')}` : 'No End Date Set'}
                   </p>
                 </CardContent>
               </Card>
@@ -655,7 +655,7 @@ export default function ProjectDetails() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">85%</div>
-                  <p className="text-xs text-muted-foreground">Team engagement</p>
+                  <p className="text-xs text-muted-foreground">Team Engagement</p>
                 </CardContent>
               </Card>
             </div>
@@ -726,7 +726,7 @@ export default function ProjectDetails() {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-lg font-medium">No tasks match your filters</p>
+                        <p className="text-lg font-medium">No tasks match the current filters</p>
                         <p className="text-sm">Try adjusting your search or filter criteria</p>
                       </div>
                     )}

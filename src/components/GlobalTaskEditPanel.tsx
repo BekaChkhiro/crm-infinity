@@ -29,6 +29,8 @@ import { TaskForm } from '@/components/TaskForm';
 import { SubtaskList } from '@/components/SubtaskList';
 import { TaskComments } from '@/components/TaskComments';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { FileAttachments } from '@/components/FileAttachments';
+import { TimeTracker } from '@/components/TimeTracker';
 import { format } from 'date-fns';
 
 const statusColors = {
@@ -294,7 +296,7 @@ export function GlobalTaskEditPanel() {
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={state.selectedTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-5 mx-4 mt-4">
+            <TabsList className="grid w-full grid-cols-6 mx-4 mt-4">
               <TabsTrigger value="details" className="flex items-center gap-1">
                 <Settings className="h-3 w-3" />
                 Details
@@ -311,6 +313,10 @@ export function GlobalTaskEditPanel() {
                 <Paperclip className="h-3 w-3" />
                 Files
               </TabsTrigger>
+              <TabsTrigger value="time" className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Time
+              </TabsTrigger>
               <TabsTrigger value="activity" className="flex items-center gap-1">
                 <Activity className="h-3 w-3" />
                 Activity
@@ -321,7 +327,7 @@ export function GlobalTaskEditPanel() {
               <TabsContent value="details" className="mt-0">
                 {state.mode === 'edit' ? (
                   <TaskForm
-                    open={true}
+                    open="embedded"
                     onOpenChange={() => {}}
                     onSubmit={handleTaskUpdate}
                     task={task}
@@ -333,9 +339,14 @@ export function GlobalTaskEditPanel() {
                     <CardContent className="p-6 space-y-4">
                       <div>
                         <h3 className="text-lg font-semibold mb-2">{task.title}</h3>
-                        {task.description && (
-                          <p className="text-muted-foreground">{task.description}</p>
-                        )}
+                        <div className="mb-3">
+                          <label className="text-sm font-medium text-muted-foreground">Description</label>
+                          {task.description ? (
+                            <p className="text-sm mt-1 whitespace-pre-wrap">{task.description}</p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic mt-1">No description provided</p>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4">
@@ -382,12 +393,17 @@ export function GlobalTaskEditPanel() {
               </TabsContent>
 
               <TabsContent value="files" className="mt-0">
-                <Card>
-                  <CardContent className="p-6 text-center text-muted-foreground">
-                    <Paperclip className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>File management coming soon</p>
-                  </CardContent>
-                </Card>
+                <FileAttachments
+                  taskId={task.id}
+                  teamMembers={teamMembers}
+                />
+              </TabsContent>
+
+              <TabsContent value="time" className="mt-0">
+                <TimeTracker
+                  taskId={task.id}
+                  teamMembers={teamMembers}
+                />
               </TabsContent>
 
               <TabsContent value="activity" className="mt-0">

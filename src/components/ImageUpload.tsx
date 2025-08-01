@@ -96,7 +96,7 @@ export function ImageUpload({
           Profile Picture
         </CardTitle>
         <CardDescription>
-          Upload a profile picture. Supports JPEG, PNG, and WebP formats up to 5MB.
+          Choose a profile picture. Supported formats: JPEG, PNG, WebP with maximum size of 5MB.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -140,13 +140,13 @@ export function ImageUpload({
               <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">
-                  Drop an image here, or{' '}
+                  Drop image here, or{' '}
                   <button
                     type="button"
                     onClick={openFileDialog}
                     className="text-primary hover:underline"
                   >
-                    browse
+                    browse files
                   </button>
                 </p>
                 <p className="text-xs text-muted-foreground">

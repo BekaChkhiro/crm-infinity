@@ -10,6 +10,7 @@ import { Calendar, Clock, User, FolderOpen, MoreVertical, Edit, Copy, Trash2, Mo
 import { format, isAfter, isBefore, addDays } from 'date-fns';
 import { Task } from '../TaskCard';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalTaskEdit } from '@/contexts/GlobalTaskEditContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface TaskDetailsTabProps {
@@ -62,6 +63,7 @@ const priorityConfig = {
 
 export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsTabProps) {
   const { toast } = useToast();
+  const { openTaskEdit } = useGlobalTaskEdit();
   const assignee = teamMembers.find(member => member.id === task.assignee_id);
 
   const getInitials = (name: string) => {
@@ -125,11 +127,8 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsT
     try {
       switch (action) {
         case 'edit':
-          // Handle edit - could open edit form or navigate to edit page
-          toast({
-            title: "Edit Task",
-            description: "Edit functionality would be implemented here"
-          });
+          // Open the global task edit panel
+          openTaskEdit(task.id);
           break;
         case 'duplicate':
           // Handle duplicate

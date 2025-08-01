@@ -22,7 +22,7 @@ export default function ForgotPassword() {
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Invalid email address';
     }
 
     setErrors(newErrors);
@@ -54,7 +54,7 @@ export default function ForgotPassword() {
             </div>
             <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
             <CardDescription>
-              We've sent a password reset link to <strong>{email}</strong>
+              We sent a password reset link to <strong>{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -67,7 +67,7 @@ export default function ForgotPassword() {
                 }}
                 className="text-primary hover:underline font-medium"
               >
-                try again with a different email
+                try a different email
               </button>
             </div>
             
@@ -75,7 +75,7 @@ export default function ForgotPassword() {
               <Link to="/login">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to sign in
+                  Back to Login
                 </Button>
               </Link>
             </div>
@@ -89,9 +89,9 @@ export default function ForgotPassword() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Forgot password?</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Forgot Password?</CardTitle>
           <CardDescription className="text-center">
-            Enter your email address and we'll send you a reset link
+            Enter your email address and we'll send you a recovery link
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -128,7 +128,7 @@ export default function ForgotPassword() {
                   Sending reset link...
                 </>
               ) : (
-                'Send reset link'
+                'Send Reset Link'
               )}
             </Button>
           </form>
@@ -136,7 +136,7 @@ export default function ForgotPassword() {
           <div className="mt-6 text-center">
             <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to sign in
+              Back to Login
             </Link>
           </div>
         </CardContent>

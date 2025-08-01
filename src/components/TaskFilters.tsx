@@ -81,8 +81,8 @@ export function TaskFiltersComponent({
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="todo">To Do</SelectItem>
             <SelectItem value="in-progress">In Progress</SelectItem>
-            <SelectItem value="review">Review</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
+            <SelectItem value="review">In Review</SelectItem>
+            <SelectItem value="done">Completed</SelectItem>
           </SelectContent>
         </Select>
 
@@ -116,7 +116,7 @@ export function TaskFiltersComponent({
 
         <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
           <SelectTrigger>
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder="Sort By" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="created_at">Created Date</SelectItem>
@@ -129,7 +129,7 @@ export function TaskFiltersComponent({
 
         <Select value={filters.sortOrder} onValueChange={(value) => updateFilter('sortOrder', value as 'asc' | 'desc')}>
           <SelectTrigger>
-            <SelectValue placeholder="Order" />
+            <SelectValue placeholder="Direction" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="desc">Newest First</SelectItem>
@@ -147,10 +147,10 @@ export function TaskFiltersComponent({
             In Progress: {taskCounts.inProgress}
           </Badge>
           <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-            Review: {taskCounts.review}
+            In Review: {taskCounts.review}
           </Badge>
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-            Done: {taskCounts.done}
+            Completed: {taskCounts.done}
           </Badge>
         </div>
       )}
@@ -193,7 +193,7 @@ export function TaskFiltersComponent({
           )}
           {filters.assignee && filters.assignee !== 'all' && (
             <Badge variant="outline">
-              Assignee: {filters.assignee === 'unassigned' ? 'Unassigned' : teamMembers.find(m => m.id === filters.assignee)?.name || 'Unknown'}
+              Assignee: {filters.assignee === 'unassigned' ? 'Not assigned' : teamMembers.find(m => m.id === filters.assignee)?.name || 'Unknown'}
               <button 
                 onClick={() => updateFilter('assignee', 'all')}
                 className="ml-1 hover:text-destructive"

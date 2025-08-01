@@ -8,12 +8,6 @@ interface AdaptiveLayoutProps {
 }
 
 export function AdaptiveLayout({ children }: AdaptiveLayoutProps) {
-  const { profile } = useProfile();
-
-  // Use AdminLayout for admin users, DashboardLayout for regular users
-  if (profile?.role === 'admin') {
-    return <AdminLayout>{children}</AdminLayout>;
-  }
-
+  // Use DashboardLayout for all users since RoleBasedNavigation handles role-specific menus
   return <DashboardLayout>{children}</DashboardLayout>;
 }

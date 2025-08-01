@@ -63,10 +63,10 @@ const priorityColors = {
 };
 
 const statusLabels = {
-  'todo': 'To Do',
-  'in-progress': 'In Progress',
-  'review': 'Review',
-  'done': 'Done',
+  'todo': 'საკეთებელი',
+  'in-progress': 'მიმდინარეობაში',
+  'review': 'მიმოხილვაში',
+  'done': 'დასრულებული',
 };
 
 export function TaskCard({ 
@@ -141,7 +141,7 @@ export function TaskCard({
                 <h3 className="font-semibold text-sm truncate">{task.title}</h3>
                 {task.is_subtask && (
                   <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
-                    Subtask
+                    ქვედავალება
                   </Badge>
                 )}
               </div>
@@ -160,14 +160,14 @@ export function TaskCard({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(task)}>
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit Task
+                  დავალების რედაქტირება
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setShowDeleteDialog(true)}
                   className="text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Task
+                  დავალების წაშლა
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -187,7 +187,7 @@ export function TaskCard({
           {task.due_date && (
             <div className="flex items-center text-xs text-muted-foreground">
               <Calendar className="h-3 w-3 mr-1" />
-              Due {format(new Date(task.due_date), 'MMM dd, yyyy')}
+              ვადა {format(new Date(task.due_date), 'MMM dd, yyyy')}
             </div>
           )}
 
@@ -228,10 +228,10 @@ export function TaskCard({
                 onChange={(e) => onStatusChange(task.id, e.target.value as Task['status'])}
                 className="text-xs border rounded px-2 py-1 bg-background"
               >
-                <option value="todo">To Do</option>
-                <option value="in-progress">In Progress</option>
-                <option value="review">Review</option>
-                <option value="done">Done</option>
+                <option value="todo">საკეთებელი</option>
+                <option value="in-progress">მიმდინარეობაში</option>
+                <option value="review">მიმოხილვაში</option>
+                <option value="done">დასრულებული</option>
               </select>
             </div>
           </div>

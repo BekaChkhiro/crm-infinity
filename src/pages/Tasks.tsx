@@ -537,7 +537,7 @@ export default function Tasks() {
             <div>
               <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
               <p className="text-muted-foreground">
-                Manage tasks across all your projects
+                Manage tasks across all projects
               </p>
             </div>
             
@@ -545,7 +545,7 @@ export default function Tasks() {
               {/* Project Selector */}
               <Select value={selectedProject} onValueChange={setSelectedProject}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select project" />
+                  <SelectValue placeholder="Select Project" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
@@ -637,7 +637,7 @@ export default function Tasks() {
                               {projectTasks.length} tasks
                             </Badge>
                             <Badge variant="secondary">
-                              {project.taskCounts.done}/{project.taskCounts.total} done
+                              {project.taskCounts.done}/{project.taskCounts.total} completed
                             </Badge>
                           </div>
                         </div>
@@ -736,9 +736,9 @@ export default function Tasks() {
                 <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                   <BarChart3 className="h-12 w-12 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">Select a project for Kanban view</h3>
+                <h3 className="text-lg font-medium mb-2">Select a Project for Kanban View</h3>
                 <p className="text-muted-foreground">
-                  Please select a specific project to view tasks in Kanban board format
+                  Please select a specific project to view tasks in Kanban format
                 </p>
               </div>
             )}
@@ -751,7 +751,7 @@ export default function Tasks() {
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <ListTodo className="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No tasks found</h3>
+            <h3 className="text-lg font-medium mb-2">No Tasks Found</h3>
             <p className="text-muted-foreground mb-4">
               Create your first task to get started
             </p>

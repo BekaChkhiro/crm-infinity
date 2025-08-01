@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { AdvancedTaskFilters, TaskFilters } from './AdvancedTaskFilters';
 import { KanbanColumn } from './KanbanColumn';
 import { Task } from './TaskCard';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,9 +36,17 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const [columns, setColumns] = useState<KanbanColumnData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterAssignee, setFilterAssignee] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filters, setFilters] = useState<TaskFilters>({
+    search: '',
+    assignees: [],
+    priorities: [],
+    statuses: [],
+    dateRange: { from: null, to: null },
+    tags: [],
+    hasFiles: null,
+    hasComments: null,
+    overdue: null,
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -113,23 +120,57 @@ export function KanbanBoard({
     }
   };
 
-  // Filter tasks based on search and filters, excluding sub-tasks
+  // Filter tasks based on advanced filters, excluding sub-tasks
   const filteredTasks = tasks.filter(task => {
     // Exclude sub-tasks from the Kanban view
     if (task.is_subtask || task.parent_task_id) {
       return false;
     }
     
-    const matchesSearch = searchTerm === '' || 
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = 
+        task.title.toLowerCase().includes(searchLower) ||
+        task.description?.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
     
-    const matchesAssignee = filterAssignee === 'all' || 
-      (filterAssignee === 'unassigned' ? !task.assignee_id : task.assignee_id === filterAssignee);
+    // Assignee filter
+    if (filters.assignees.length > 0) {
+      const matchesAssignee = filters.assignees.some(assigneeId => 
+        assigneeId === 'unassigned' ? !task.assignee_id : task.assignee_id === assigneeId
+      );
+      if (!matchesAssignee) return false;
+    }
     
-    const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+    // Priority filter
+    if (filters.priorities.length > 0) {
+      if (!filters.priorities.includes(task.priority)) return false;
+    }
     
-    return matchesSearch && matchesAssignee && matchesPriority;
+    // Status filter
+    if (filters.statuses.length > 0) {
+      if (!filters.statuses.includes(task.status)) return false;
+    }
+    
+    // Date range filter
+    if (filters.dateRange.from || filters.dateRange.to) {
+      if (!task.due_date) return false;
+      const taskDate = new Date(task.due_date);
+      if (filters.dateRange.from && taskDate < filters.dateRange.from) return false;
+      if (filters.dateRange.to && taskDate > filters.dateRange.to) return false;
+    }
+    
+    // Overdue filter
+    if (filters.overdue === true) {
+      if (!task.due_date) return false;
+      const now = new Date();
+      const dueDate = new Date(task.due_date);
+      if (dueDate >= now) return false;
+    }
+    
+    return true;
   });
 
   // Group tasks by column
@@ -159,44 +200,12 @@ export function KanbanBoard({
     <div className="h-full flex flex-col space-y-6">
       {/* Filters and Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-          
-          <Select value={filterAssignee} onValueChange={setFilterAssignee}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All assignees" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All assignees</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {teamMembers.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Select value={filterPriority} onValueChange={setFilterPriority}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="All priorities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All priorities</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex-1">
+          <AdvancedTaskFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            teamMembers={teamMembers}
+          />
         </div>
         
         <Button onClick={onCreateTask}>

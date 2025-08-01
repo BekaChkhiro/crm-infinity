@@ -52,30 +52,35 @@ export function GlobalTaskEditProvider({ children }: GlobalTaskEditProviderProps
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl+E or Cmd+E to open task edit (if a task is selected)
-      if ((event.ctrlKey || event.metaKey) && event.key === 'e') {
-        event.preventDefault();
-        
-        // Try to get selected task from current context
-        const selectedTaskElement = document.querySelector('[data-task-selected="true"]');
-        if (selectedTaskElement) {
-          const taskId = selectedTaskElement.getAttribute('data-task-id');
-          if (taskId) {
-            openTaskEdit(taskId, 'edit');
-          }
-        }
-      }
+    const handleShortcutEvent = (event: CustomEvent) => {
+      const { action, tab } = event.detail;
       
-      // Escape to close panel
-      if (event.key === 'Escape' && state.isOpen) {
-        closeTaskEdit();
+      switch (action) {
+        case 'edit-task':
+          if (state.isOpen && state.mode === 'view') {
+            setMode('edit');
+          }
+          break;
+        case 'save-task':
+          if (state.isOpen && state.mode === 'edit') {
+            // Trigger save action
+            const saveEvent = new CustomEvent('task-save');
+            window.dispatchEvent(saveEvent);
+          }
+          break;
+        case 'switch-tab':
+          if (state.isOpen && tab) {
+            setActiveTab(tab);
+          }
+          break;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [state.isOpen]);
+    window.addEventListener('keyboard-shortcut', handleShortcutEvent as EventListener);
+    return () => {
+      window.removeEventListener('keyboard-shortcut', handleShortcutEvent as EventListener);
+    };
+  }, [state]);
 
   const openTaskEdit = (taskId: string, mode: 'view' | 'edit' = 'view', tab: string = 'details') => {
     const currentUrl = location.pathname + location.search;

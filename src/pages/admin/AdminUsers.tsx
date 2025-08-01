@@ -193,8 +193,8 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground">Manage all users in your system</p>
+          <h1 className="text-3xl font-bold">მომხმარებლები</h1>
+          <p className="text-muted-foreground">მართეთ ყველა მომხმარებელი თქვენს სისტემაში</p>
         </div>
       </div>
 
@@ -202,7 +202,7 @@ export default function AdminUsers() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">მომხმარებლების რაოდენობა</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -211,7 +211,7 @@ export default function AdminUsers() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
+            <CardTitle className="text-sm font-medium">ადმინ მომხმარებლები</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -222,7 +222,7 @@ export default function AdminUsers() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Regular Users</CardTitle>
+            <CardTitle className="text-sm font-medium">ჩვეულებრივი მომხმარებლები</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -233,7 +233,7 @@ export default function AdminUsers() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">აქტიური პროექტები</CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -247,7 +247,7 @@ export default function AdminUsers() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search users..."
+            placeholder="მომხმარებლების ძიება..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -258,7 +258,7 @@ export default function AdminUsers() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="all">ყველა როლი</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="user">User</SelectItem>
           </SelectContent>
@@ -268,20 +268,20 @@ export default function AdminUsers() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <CardTitle>ყველა მომხმარებელი</CardTitle>
           <CardDescription>
-            {filteredUsers.length} of {users.length} users
+            {filteredUsers.length} {users.length}-იდან მომხმარებელი
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Projects</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>მომხმარებელი</TableHead>
+                <TableHead>როლი</TableHead>
+                <TableHead>პროექტები</TableHead>
+                <TableHead>შემოერთდა</TableHead>
+                <TableHead>მოქმედებები</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -308,7 +308,7 @@ export default function AdminUsers() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="user">მომხმარებელი</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
@@ -333,7 +333,7 @@ export default function AdminUsers() {
                       }}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Add to Project
+                      პროექტში დამატება
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -343,8 +343,8 @@ export default function AdminUsers() {
           {filteredUsers.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No users found</p>
-              <p className="text-sm">Users will appear here when they register</p>
+              <p>მომხმარებლები არ მოიძებნა</p>
+              <p className="text-sm">მომხმარებლები გამოჩნდებიან აქ რეგისტრაციის შემდეგ</p>
             </div>
           )}
         </CardContent>
@@ -354,17 +354,17 @@ export default function AdminUsers() {
       <Dialog open={addToProjectDialog} onOpenChange={setAddToProjectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add User to Project</DialogTitle>
+            <DialogTitle>მომხმარებლის პროექტში დამატება</DialogTitle>
             <DialogDescription>
-              Add {selectedUser?.display_name || selectedUser?.full_name || 'user'} to a project
+              დაამატეთ {selectedUser?.display_name || selectedUser?.full_name || 'მომხმარებელი'} პროექტში
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="project">Select Project</Label>
+              <Label htmlFor="project">აირჩიეთ პროექტი</Label>
               <Select value={selectedProject} onValueChange={setSelectedProject}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a project" />
+                  <SelectValue placeholder="აირჩიეთ პროექტი" />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((project) => (
@@ -376,15 +376,15 @@ export default function AdminUsers() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="role">Project Role</Label>
+              <Label htmlFor="role">პროექტის როლი</Label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="viewer">მაყურებელი</SelectItem>
+                  <SelectItem value="member">წევრი</SelectItem>
+                  <SelectItem value="manager">მენეჯერი</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -393,7 +393,7 @@ export default function AdminUsers() {
               className="w-full"
               disabled={!selectedProject}
             >
-              Add to Project
+              პროექტში დამატება
             </Button>
           </div>
         </DialogContent>
