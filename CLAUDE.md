@@ -9,28 +9,25 @@ This is a React TypeScript task/project management application built with Vite, 
 ## Development Commands
 
 ```bash
-# Install dependencies (use bun or npm)
-bun install
+# Install dependencies (npm is used in this project)
 npm install
 
-# Start development server
-bun run dev
+# Start development server (runs on port 8080)
 npm run dev
 
 # Build for production
-bun run build
 npm run build
 
+# Build for development mode
+npm run build:dev
+
 # Preview production build
-bun run preview
 npm run preview
 
 # Run linting
-bun run lint
 npm run lint
 
-# Build for Render deployment
-bun run build:render
+# Build for Render deployment (same as production build)
 npm run build:render
 ```
 
@@ -112,16 +109,20 @@ All tables have Row Level Security policies implemented.
 
 1. **Supabase Configuration**: The Supabase URL and anon key are hardcoded in `/src/integrations/supabase/client.ts`. In production, these should be environment variables.
 
-2. **TypeScript Configuration**: The project uses TypeScript without strict mode, which may allow some type safety issues.
+2. **TypeScript Configuration**: The project uses TypeScript with relaxed settings (noImplicitAny: false, strictNullChecks: false) which may allow some type safety issues.
 
 3. **No Test Suite**: The project currently has no tests. Consider adding tests when implementing new features.
 
 4. **Build Output**: The production build outputs to the `dist` directory.
 
-5. **Deployment**: Configured for Render.com deployment with `render.yaml` configuration file.
+5. **Deployment**: Configured for Render.com deployment with `render.yaml` configuration file using bun for builds.
 
 6. **Authentication Guards**: Always use `ProtectedRoute` or `AdminRoute` components for routes that require authentication.
 
 7. **Database Operations**: All database operations should go through Supabase client with proper error handling.
 
 8. **State Updates**: When updating global state (auth, profile, tasks), ensure proper error handling and loading states.
+
+9. **Path Aliases**: The project uses `@` as an alias for the `src` directory (`@/components/...`).
+
+10. **Development Server**: The Vite dev server runs on port 8080 and binds to all interfaces ("::").

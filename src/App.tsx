@@ -1,36 +1,38 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { GlobalTaskEditProvider } from "@/contexts/GlobalTaskEditContext";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AdminRoute } from "@/components/AdminRoute";
-import { GlobalTaskEditPanel } from "@/components/GlobalTaskEditPanel";
+import { ThemeProvider } from "@/shared/components/common/ThemeProvider";
+import { KeyboardShortcutsDialog } from "@/shared/components/common/KeyboardShortcutsDialog";
+import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
+import { ProtectedRoute } from "@/core/router/ProtectedRoute";
+import { AdminRoute } from "@/core/router/AdminRoute";
+import { GlobalTaskEditPanel } from "@/features/tasks/components/GlobalTaskEditPanel";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import Tasks from "./pages/Tasks";
-import ProfileEdit from "./pages/user-dashboard/ProfileEdit";
-import ChangePassword from "./pages/ChangePassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminProjects from "./pages/admin/AdminProjects";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminActivity from "./pages/admin/AdminActivity";
-import AdminSettings from "./pages/admin/AdminSettings";
-import UserProjects from "./pages/user-dashboard/UserProjects";
-import ProjectDetails from "./pages/ProjectDetails";
-import ProjectSettings from "./pages/ProjectSettings";
+import Login from "@/features/auth/pages/Login";
+import Register from "@/features/auth/pages/Register";
+import ForgotPassword from "@/features/auth/pages/ForgotPassword";
+import Tasks from "@/features/tasks/pages/Tasks";
+import ProfileEdit from "@/modules/user/pages/ProfileEdit";
+import ChangePassword from "@/features/auth/pages/ChangePassword";
+import AdminDashboard from "@/modules/admin/pages/AdminDashboard";
+import AdminProjects from "@/modules/admin/pages/AdminProjects";
+import AdminProjectDetails from "@/modules/admin/pages/AdminProjectDetails";
+import AdminUsers from "@/modules/admin/pages/AdminUsers";
+import AdminActivity from "@/modules/admin/pages/AdminActivity";
+import AdminSettings from "@/modules/admin/pages/AdminSettings";
+import UserProjects from "@/modules/user/pages/UserProjects";
+import ProjectDetails from "@/features/projects/pages/ProjectDetails";
+import ProjectSettings from "@/features/projects/pages/ProjectSettings";
 import NotFound from "./pages/NotFound";
-import { RoleDashboard } from "./components/RoleDashboard";
-import { UserSettings } from "./components/UserSettings";
-import { AdaptiveLayout } from "./layouts/AdaptiveLayout";
+import { UserDashboard } from "@/modules/user/pages/UserDashboard";
+import { UserSettings } from "@/features/profile/components/UserSettings";
+import { DashboardLayout } from "@/modules/user/layouts/DashboardLayout";
+import { AdminLayout } from "@/modules/admin/layouts/AdminLayout";
 
 const queryClient = new QueryClient();
 
@@ -44,11 +46,12 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* USER ROUTES - All use DashboardLayout */}
         <Route 
           path="/dashboard" 
           element={
             <ProtectedRoute>
-              <RoleDashboard />
+              <UserDashboard />
             </ProtectedRoute>
           } 
         />
@@ -56,9 +59,49 @@ function AppContent() {
           path="/tasks" 
           element={
             <ProtectedRoute>
-              <AdaptiveLayout>
+              <DashboardLayout>
                 <Tasks />
-              </AdaptiveLayout>
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/tasks/view/:taskId" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Tasks />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/projects" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <UserProjects />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/project/:id" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ProjectDetails />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/project/:id/settings" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ProjectSettings />
+              </DashboardLayout>
             </ProtectedRoute>
           } 
         />
@@ -66,17 +109,9 @@ function AppContent() {
           path="/profile/edit" 
           element={
             <ProtectedRoute>
-              <AdaptiveLayout>
+              <DashboardLayout>
                 <ProfileEdit />
-              </AdaptiveLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/change-password" 
-          element={
-            <ProtectedRoute>
-              <ChangePassword />
+              </DashboardLayout>
             </ProtectedRoute>
           } 
         />
@@ -84,14 +119,34 @@ function AppContent() {
           path="/settings" 
           element={
             <ProtectedRoute>
-              <AdaptiveLayout>
+              <DashboardLayout>
                 <UserSettings />
-              </AdaptiveLayout>
+              </DashboardLayout>
             </ProtectedRoute>
           } 
         />
         <Route 
+          path="/change-password" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ChangePassword />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* ADMIN ROUTES - All use AdminLayout and admin paths */}
+        <Route 
           path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/dashboard" 
           element={
             <AdminRoute>
               <AdminDashboard />
@@ -131,42 +186,24 @@ function AppContent() {
           } 
         />
         <Route 
-          path="/project/:id" 
+          path="/admin/tasks" 
           element={
-            <ProtectedRoute>
-              <AdaptiveLayout>
-                <ProjectDetails />
-              </AdaptiveLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/project/:id/settings" 
-          element={
-            <ProtectedRoute>
-              <ProjectSettings />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/tasks/view/:taskId" 
-          element={
-            <ProtectedRoute>
-              <AdaptiveLayout>
+            <AdminRoute>
+              <AdminLayout>
                 <Tasks />
-              </AdaptiveLayout>
-            </ProtectedRoute>
+              </AdminLayout>
+            </AdminRoute>
           } 
         />
-        <Route
-          path="/projects"
+        <Route 
+          path="/admin/project/:id" 
           element={
-            <ProtectedRoute>
-              <AdaptiveLayout>
-                <UserProjects />
-              </AdaptiveLayout>
-            </ProtectedRoute>
-          }
+            <AdminRoute>
+              <AdminLayout>
+                <AdminProjectDetails />
+              </AdminLayout>
+            </AdminRoute>
+          } 
         />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

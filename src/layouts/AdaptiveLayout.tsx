@@ -1,7 +1,7 @@
 import React from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
-import { AdminLayout } from '@/layouts/AdminLayout';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { AdminLayout } from '@/modules/admin/layouts/AdminLayout';
+import { DashboardLayout } from '@/modules/user/layouts/DashboardLayout';
 
 interface AdaptiveLayoutProps {
   children: React.ReactNode;
