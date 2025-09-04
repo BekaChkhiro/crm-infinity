@@ -85,6 +85,13 @@ export default function Tasks() {
     sortOrder: 'desc',
   });
 
+  // Default to current user's tasks when available
+  useEffect(() => {
+    if (user && filters.assignee === 'all') {
+      setFilters((prev) => ({ ...prev, assignee: user.id }));
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     
@@ -465,7 +472,12 @@ export default function Tasks() {
       if (filters.assignee === 'unassigned') {
         tasks = tasks.filter(task => !task.assignee_id);
       } else {
-        tasks = tasks.filter(task => task.assignee_id === filters.assignee);
+        // If filtering for the current user, include tasks assigned to them OR created by them
+        if (user && filters.assignee === user.id) {
+          tasks = tasks.filter(task => task.assignee_id === user.id || task.created_by === user.id);
+        } else {
+          tasks = tasks.filter(task => task.assignee_id === filters.assignee);
+        }
       }
     }
 
