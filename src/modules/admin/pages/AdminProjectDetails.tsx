@@ -16,7 +16,7 @@ import { TaskForm } from '@/features/tasks/components/TaskForm';
 import { TaskFiltersComponent, TaskFilters } from '@/features/tasks/components/TaskFilters';
 import { TeamManagement } from '@/features/projects/components/EnhancedTeamManagement';
 import { KanbanBoard } from '@/features/kanban/components/KanbanBoard';
-import { ProjectCalendar } from '@/features/projects/components/ProjectCalendar';
+import { TasksCalendarView } from '@/features/tasks/components/TasksCalendarView';
 import { FileManager } from '@/shared/components/forms/FileManager';
 import { ActivityFeed } from '@/shared/components/common/ActivityFeed';
 import { TaskViewerSidebar } from '@/features/tasks/components/TaskViewerSidebar';
@@ -913,9 +913,11 @@ export default function AdminProjectDetails() {
           </TabsContent>
 
           <TabsContent value="calendar" className="py-6">
-            <ProjectCalendar
-              projectId={id!}
+            <TasksCalendarView
               tasks={tasks}
+              teamMembers={teamMembers}
+              onTaskEdit={openEditTaskForm}
+              onTaskClick={handleTaskClick}
             />
           </TabsContent>
 
