@@ -8,7 +8,8 @@ import {
   Database,
   Activity,
   FileText,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 
 const adminNavigation = [
@@ -16,6 +17,7 @@ const adminNavigation = [
   { name: 'User Management', href: '/admin/users', icon: Users },
   { name: 'Project Management', href: '/admin/projects', icon: Database },
   { name: 'System Activity', href: '/admin/activity', icon: Activity },
+  { name: 'Time Analytics', href: '/admin/time-analytics', icon: BarChart3 },
   { name: 'All Tasks', href: '/admin/tasks', icon: FileText },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];

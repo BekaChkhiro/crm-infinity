@@ -29,6 +29,7 @@ import {
 import { format, subDays, isAfter } from 'date-fns';
 import { AdminSystemHealth } from '@/modules/admin/components/AdminSystemHealth';
 import { TeamPerformanceAnalytics } from '@/features/projects/components/TeamPerformanceAnalytics';
+import { TimeTrackingAnalytics } from '@/modules/admin/components/TimeTrackingAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
 interface AdminStats {
@@ -468,7 +469,7 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <Link to="/admin/users">
                   <Button variant="outline" className="w-full h-16 flex-col space-y-1">
                     <UserPlus className="h-5 w-5" />
@@ -487,8 +488,14 @@ export default function AdminDashboard() {
                     <span className="text-xs">View Activity</span>
                   </Button>
                 </Link>
-                <Link to="/admin/settings">
+                <Link to="/admin/time-analytics">
                   <Button variant="outline" className="w-full h-16 flex-col space-y-1">
+                    <BarChart3 className="h-5 w-5" />
+                    <span className="text-xs">Time Analytics</span>
+                  </Button>
+                </Link>
+                <Link to="/admin/settings">
+                  <Button variant="outline" className="w-full h-16 flex-col space-y-1 col-span-2">
                     <Settings className="h-5 w-5" />
                     <span className="text-xs">Settings</span>
                   </Button>
@@ -532,9 +539,14 @@ export default function AdminDashboard() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="timetracking">Time Tracking</TabsTrigger>
             <TabsTrigger value="health">System Health</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="timetracking">
+            <TimeTrackingAnalytics />
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Recent Activity Tables */}

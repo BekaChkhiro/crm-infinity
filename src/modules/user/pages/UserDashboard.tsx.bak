@@ -42,7 +42,8 @@ import { AdvancedUserDashboard } from "@/modules/user/components/AdvancedUserDas
 import { TeamWorkspace } from "@/features/projects/components/TeamWorkspace";
 import { UserProfile } from "@/features/profile/components/UserProfile";
 import { UserSettings } from "@/features/profile/components/UserSettings";
-// import { CompactTimeTracker } from "@/features/time-tracking/components/CompactTimeTracker";
+import { CompactTimeTracker } from "@/features/time-tracking/components/CompactTimeTracker";
+import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
 import {
   Tabs,
   TabsContent,
@@ -292,7 +293,8 @@ export function UserDashboard() {
   }
 
   return (
-    <DashboardLayout>
+    <TimeTrackingProvider>
+      <DashboardLayout>
         <div className="p-6 space-y-6">
           {/* Welcome Header */}
           <div className="flex items-center justify-between">
@@ -377,7 +379,12 @@ export function UserDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Time Tracker */}
+            <div className="lg:col-span-1">
+              <CompactTimeTracker />
+            </div>
+
             {/* Progress Overview */}
             <Card className="lg:col-span-1">
               <CardHeader>
@@ -629,5 +636,6 @@ export function UserDashboard() {
           </Tabs>
         </div>
       </DashboardLayout>
+    </TimeTrackingProvider>
   );
 }

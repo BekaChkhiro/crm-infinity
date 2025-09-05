@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { GlobalTaskEditProvider } from "@/contexts/GlobalTaskEditContext";
+import { TimeTrackingProvider } from "@/contexts/TimeTrackingContext";
+import { FloatingTimer } from "@/features/time-tracking/components/FloatingTimer";
 import { ThemeProvider } from "@/shared/components/common/ThemeProvider";
 import { KeyboardShortcutsDialog } from "@/shared/components/common/KeyboardShortcutsDialog";
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
@@ -25,6 +27,7 @@ import AdminProjectDetails from "@/modules/admin/pages/AdminProjectDetails";
 import AdminUsers from "@/modules/admin/pages/AdminUsers";
 import AdminActivity from "@/modules/admin/pages/AdminActivity";
 import AdminSettings from "@/modules/admin/pages/AdminSettings";
+import AdminTimeTrackingAnalytics from "@/modules/admin/pages/AdminTimeTrackingAnalytics";
 import UserProjects from "@/modules/user/pages/UserProjects";
 import ProjectDetails from "@/features/projects/pages/ProjectDetails";
 import ProjectSettings from "@/features/projects/pages/ProjectSettings";
@@ -186,6 +189,14 @@ function AppContent() {
           } 
         />
         <Route 
+          path="/admin/time-analytics" 
+          element={
+            <AdminRoute>
+              <AdminTimeTrackingAnalytics />
+            </AdminRoute>
+          } 
+        />
+        <Route 
           path="/admin/tasks" 
           element={
             <AdminRoute>
@@ -220,13 +231,16 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <ProfileProvider>
-            <BrowserRouter>
-              <GlobalTaskEditProvider>
-                <Toaster />
-                <Sonner />
-                <AppContent />
-              </GlobalTaskEditProvider>
-            </BrowserRouter>
+            <TimeTrackingProvider>
+              <BrowserRouter>
+                <GlobalTaskEditProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AppContent />
+                  <FloatingTimer />
+                </GlobalTaskEditProvider>
+              </BrowserRouter>
+            </TimeTrackingProvider>
           </ProfileProvider>
         </AuthProvider>
       </TooltipProvider>
