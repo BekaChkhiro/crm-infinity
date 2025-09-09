@@ -337,13 +337,15 @@ export function TimeTrackingAnalytics() {
   const exportData = async () => {
     try {
       const csvContent = [
-        'User,Role,Total Time,Entries Count,Avg Session,Last Activity',
+        'User,Role,Total Time,Weekly Time,Monthly Time,Daily Avg,Entries Count,Last Activity',
         ...userStats.map(stat => [
           stat.user_name,
           stat.user_role,
           formatDurationDetailed(stat.total_time),
+          formatDurationDetailed(stat.weekly_total),
+          formatDurationDetailed(stat.monthly_total),
+          formatDurationDetailed(stat.daily_avg),
           stat.entries_count,
-          formatDurationDetailed(stat.avg_session),
           stat.last_activity ? format(new Date(stat.last_activity), 'yyyy-MM-dd HH:mm:ss') : 'Never'
         ].join(','))
       ].join('\n');
@@ -394,11 +396,11 @@ export function TimeTrackingAnalytics() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <BarChart3 className="h-8 w-8" />
-          ტაიმ ჩეკერის ანალიტიკა
+          Time Tracking Analytics
         </h1>
         <Button onClick={exportData} className="gap-2">
           <Download className="h-4 w-4" />
-          ექსპორტი
+          Export
         </Button>
       </div>
 
@@ -408,7 +410,7 @@ export function TimeTrackingAnalytics() {
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="მოძებნე მომხმარებელი..."
+              placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -419,8 +421,8 @@ export function TimeTrackingAnalytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="summary">ჯამური ვიუ</SelectItem>
-              <SelectItem value="daily">დღიური ვიუ</SelectItem>
+              <SelectItem value="summary">Summary View</SelectItem>
+              <SelectItem value="daily">Daily View</SelectItem>
             </SelectContent>
           </Select>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -428,9 +430,9 @@ export function TimeTrackingAnalytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">ყველა როლი</SelectItem>
-              <SelectItem value="admin">ადმინი</SelectItem>
-              <SelectItem value="user">მომხმარებელი</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="user">User</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -441,18 +443,18 @@ export function TimeTrackingAnalytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="today">დღეს</SelectItem>
-              <SelectItem value="week">ამ კვირაში</SelectItem>
-              <SelectItem value="month">ამ თვეში</SelectItem>
-              <SelectItem value="quarter">უკანასკნელი 3 თვე</SelectItem>
-              <SelectItem value="custom">ასარჩევი თარიღები</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">Last 3 Months</SelectItem>
+              <SelectItem value="custom">Custom Dates</SelectItem>
             </SelectContent>
           </Select>
           
           {dateRange === 'custom' && (
             <>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">დან:</label>
+                <label className="text-sm font-medium">From:</label>
                 <Input
                   type="date"
                   value={customStartDate}
@@ -461,7 +463,7 @@ export function TimeTrackingAnalytics() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">მდე:</label>
+                <label className="text-sm font-medium">To:</label>
                 <Input
                   type="date"
                   value={customEndDate}
@@ -478,7 +480,7 @@ export function TimeTrackingAnalytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">სულ დრო</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -488,7 +490,7 @@ export function TimeTrackingAnalytics() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">აქტიური მომხმარებლები</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -498,7 +500,7 @@ export function TimeTrackingAnalytics() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">სულ ჩანაწერი</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -508,7 +510,7 @@ export function TimeTrackingAnalytics() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">საშ. სესიის ხანგრძლივობა</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Session Duration</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -523,7 +525,7 @@ export function TimeTrackingAnalytics() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              მომხმარებელთა სტატისტიკა
+              User Statistics
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -531,14 +533,14 @@ export function TimeTrackingAnalytics() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">მომხმარებელი</th>
-                    <th className="text-left p-2">როლი</th>
-                    <th className="text-right p-2">სულ დრო</th>
-                    <th className="text-right p-2">კვირის დრო</th>
-                    <th className="text-right p-2">თვის დრო</th>
-                    <th className="text-right p-2">დღის საშ.</th>
-                    <th className="text-right p-2">ჩანაწერები</th>
-                    <th className="text-left p-2">ბოლო აქტივობა</th>
+                    <th className="text-left p-2">User</th>
+                    <th className="text-left p-2">Role</th>
+                    <th className="text-right p-2">Total Time</th>
+                    <th className="text-right p-2">Weekly Time</th>
+                    <th className="text-right p-2">Monthly Time</th>
+                    <th className="text-right p-2">Daily Avg</th>
+                    <th className="text-right p-2">Entries</th>
+                    <th className="text-left p-2">Last Activity</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -547,7 +549,7 @@ export function TimeTrackingAnalytics() {
                       <td className="p-2 font-medium">{stat.user_name}</td>
                       <td className="p-2">
                         <Badge variant={stat.user_role === 'admin' ? 'destructive' : 'secondary'}>
-                          {stat.user_role === 'admin' ? 'ადმინი' : 'მომხმარებელი'}
+                          {stat.user_role === 'admin' ? 'Admin' : 'User'}
                         </Badge>
                       </td>
                       <td className="p-2 text-right font-mono">
@@ -572,7 +574,7 @@ export function TimeTrackingAnalytics() {
                             </span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">არასოდეს</span>
+                          <span className="text-muted-foreground text-sm">Never</span>
                         )}
                       </td>
                     </tr>
@@ -583,7 +585,7 @@ export function TimeTrackingAnalytics() {
               {filteredStats.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">მოთხოვნის შესაბამისი მონაცემები არ მოიძებნა</p>
+                  <p className="text-muted-foreground">No data found matching your criteria</p>
                 </div>
               )}
             </div>
@@ -594,7 +596,7 @@ export function TimeTrackingAnalytics() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              დღიური სამუშაო საათები
+              Daily Work Hours
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -602,10 +604,10 @@ export function TimeTrackingAnalytics() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">მომხმარებელი</th>
-                    <th className="text-left p-2">თარიღი</th>
-                    <th className="text-right p-2">სამუშაო საათები</th>
-                    <th className="text-right p-2">ჩანაწერები</th>
+                    <th className="text-left p-2">User</th>
+                    <th className="text-left p-2">Date</th>
+                    <th className="text-right p-2">Work Hours</th>
+                    <th className="text-right p-2">Entries</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -634,7 +636,7 @@ export function TimeTrackingAnalytics() {
               {dailyWorkHours.length === 0 && (
                 <div className="text-center py-8">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">მოთხოვნის შესაბამისი მონაცემები არ მოიძებნა</p>
+                  <p className="text-muted-foreground">No data found matching your criteria</p>
                 </div>
               )}
             </div>
