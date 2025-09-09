@@ -363,45 +363,16 @@ export default function ProjectDetails() {
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    // Task was already deleted from modal, just refresh the UI
     try {
-      // Get task title before deleting
-      const { data: taskData } = await supabase
-        .from('tasks')
-        .select('title')
-        .eq('id', taskId)
-        .single();
-
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
-
-      if (error) throw error;
-
-      // Log activity
-      await supabase.rpc('log_project_activity', {
-        p_project_id: id,
-        p_user_id: user?.id,
-        p_activity_type: 'task_deleted',
-        p_description: `Deleted task "${taskData?.title || 'Unknown'}"`,
-        p_entity_type: 'task',
-        p_entity_id: taskId
-      });
-
-      toast({
-        title: "Success",
-        description: "Task deleted successfully",
-      });
-
-      fetchTasks();
-      fetchProjectStats();
+      // Force UI refresh by clearing state and refetching
+      setTasks([]);
+      await Promise.all([fetchTasks(), fetchProjectStats()]);
     } catch (err: any) {
-      console.error('Error deleting task:', err);
-      toast({
-        title: "Error",
-        description: "Failed to delete task",
-        variant: "destructive"
-      });
+      console.error('Error refreshing project data:', err);
+      // Still try to refresh even if there's an error
+      await fetchTasks();
+      await fetchProjectStats();
     }
   };
 
@@ -851,6 +822,7 @@ export default function ProjectDetails() {
         taskId={selectedTaskId}
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
+        onTaskDelete={handleDeleteTask}
       />
     </div>
   );

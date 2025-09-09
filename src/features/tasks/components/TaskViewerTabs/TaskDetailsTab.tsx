@@ -5,6 +5,7 @@ import { Progress } from '@/shared/components/ui/progress';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog';
 import { Separator } from '@/shared/components/ui/separator';
 import { Calendar, Clock, User, FolderOpen, MoreVertical, Trash2, CheckCircle2, AlertCircle, Timer, Target } from 'lucide-react';
 import { format, isAfter, isBefore, addDays } from 'date-fns';
@@ -19,6 +20,8 @@ interface TaskDetailsTabProps {
   task: Task;
   teamMembers: Array<{ id: string; name: string; email?: string }>;
   onTaskUpdate: () => void;
+  onTaskDelete?: (taskId: string) => void;
+  onClose?: () => void;
 }
 
 const statusConfig = {
@@ -77,11 +80,12 @@ const priorityOptions = [
   { value: 'critical', label: 'კრიტიკული', icon: <div className="h-2 w-2 rounded-full bg-red-500"></div>, color: 'bg-red-50 text-red-700 border-red-200' }
 ];
 
-export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsTabProps) {
+export function TaskDetailsTab({ task, teamMembers, onTaskUpdate, onTaskDelete, onClose }: TaskDetailsTabProps) {
   const { toast } = useToast();
   const { openTaskEdit } = useGlobalTaskEdit();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [localTask, setLocalTask] = useState(task);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const { saveField, validators, isSaving, lastSaved } = useTaskAutoSave({
     taskId: task.id,
@@ -165,31 +169,90 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsT
 
   const dueDateStatus = getDueDateStatus();
 
-  const handleQuickAction = async (action: string) => {
+  const handleDeleteTask = async () => {
+    console.log('handleDeleteTask called for task:', localTask.id);
+    console.log('Task details:', {
+      id: localTask.id,
+      title: localTask.title,
+      created_by: localTask.created_by,
+      assignee_id: localTask.assignee_id,
+      project_id: localTask.project_id
+    });
+    
+    // First, let's check if we can read the task and see current user
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user?.id);
+    console.log('Can user delete this task?', {
+      isCreator: localTask.created_by === user?.id,
+      isAssignee: localTask.assignee_id === user?.id,
+      taskCreatedBy: localTask.created_by,
+      currentUser: user?.id
+    });
+
     try {
-      switch (action) {
-        case 'delete':
-          // Handle delete with confirmation
-          if (confirm('ნამდვილად გსურთ ამ დავალების წაშლა?')) {
-            const { error } = await supabase
-              .from('tasks')
-              .delete()
-              .eq('id', localTask.id);
-            
-            if (error) throw error;
-            
-            toast({
-              title: "წარმატება",
-              description: "დავალება წარმატებით წაიშალა"
-            });
-            onTaskUpdate();
-          }
-          break;
+      // Test if we can select the task first
+      const { data: testSelect, error: selectError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', localTask.id)
+        .single();
+      
+      console.log('Can select task?', { data: testSelect, error: selectError });
+      
+      // Now try to delete
+      console.log('Attempting to delete task...');
+      const { error, count } = await supabase
+        .from('tasks')
+        .delete({ count: 'exact' })
+        .eq('id', localTask.id);
+      
+      console.log('Delete result:', { error, count });
+      
+      if (error) {
+        console.error('Database deletion failed:', error);
+        throw error;
       }
+      
+      if (count === 0) {
+        console.warn('No rows were deleted - this might indicate permission issues');
+        throw new Error('Task could not be deleted - no permission or task not found');
+      }
+      
+      console.log('Direct deletion successful, rows deleted:', count);
+      
+      toast({
+        title: "წარმატება",
+        description: "დავალება წარმატებით წაიშლა"
+      });
+      
+      setShowDeleteDialog(false);
+      
+      // Immediately refresh the parent's task list since we just deleted from DB
+      if (onTaskDelete) {
+        onTaskDelete(localTask.id);
+      }
+      
+      // Also refresh local data for other components
+      onTaskUpdate();
+      
+      // Close the sidebar after a brief delay to show the refresh happened
+      if (onClose) {
+        setTimeout(() => {
+          onClose();
+        }, 300);
+      }
+      
     } catch (error: any) {
+      console.error('Delete error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
       toast({
         title: "შეცდომა",
-        description: error.message,
+        description: `წაშლა ვერ მოხერხდა: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -255,7 +318,7 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsT
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem 
-                  onClick={() => handleQuickAction('delete')}
+                  onClick={() => setShowDeleteDialog(true)}
                   className="text-destructive focus:text-destructive gap-3"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -415,6 +478,28 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate }: TaskDetailsT
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>დავალების წაშლა</AlertDialogTitle>
+            <AlertDialogDescription>
+              ნამდვილად გსურთ დავალება "{localTask.title}"-ს წაშლა? 
+              ეს მოქმედება შეუქცევადია და დავალება სამუდამოდ წაიშლება.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>გაუქმება</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteTask}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              წაშლა
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

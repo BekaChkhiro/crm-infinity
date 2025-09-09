@@ -18,6 +18,7 @@ import Index from "./pages/Index";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import ForgotPassword from "@/features/auth/pages/ForgotPassword";
+import ResetPassword from "@/features/auth/pages/ResetPassword";
 import Tasks from "@/features/tasks/pages/Tasks";
 import ProfileEdit from "@/modules/user/pages/ProfileEdit";
 import ChangePassword from "@/features/auth/pages/ChangePassword";
@@ -49,6 +50,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* USER ROUTES - All use DashboardLayout */}
         <Route 
           path="/dashboard" 

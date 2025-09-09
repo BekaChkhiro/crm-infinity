@@ -151,28 +151,57 @@ export default function Tasks() {
 
       const projectsWithTasks: ProjectWithTasks[] = await Promise.all(
         (projectsData || []).map(async (project) => {
-          const { data: tasksData, error: tasksError } = await supabase
-            .from('tasks')
-            .select('*')
-            .eq('project_id', project.id)
-            .order('created_at', { ascending: false });
+          try {
+            const { data: tasksData, error: tasksError } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('project_id', project.id)
+              .order('created_at', { ascending: false });
 
-          if (tasksError) throw tasksError;
-
-          const tasks = (tasksData || []) as Task[];
-          const parentTasks = tasks.filter(t => !t.is_subtask);
-          
-          return {
-            ...project,
-            tasks,
-            taskCounts: {
-              total: parentTasks.length,
-              todo: parentTasks.filter(t => t.status === 'todo').length,
-              inProgress: parentTasks.filter(t => t.status === 'in-progress').length,
-              review: parentTasks.filter(t => t.status === 'review').length,
-              done: parentTasks.filter(t => t.status === 'done').length,
+            if (tasksError) {
+              console.warn(`Error fetching tasks for project ${project.id}:`, tasksError);
+              // Return project with empty tasks array if there's an error
+              return {
+                ...project,
+                tasks: [],
+                taskCounts: {
+                  total: 0,
+                  todo: 0,
+                  inProgress: 0,
+                  review: 0,
+                  done: 0,
+                }
+              };
             }
-          };
+
+            const tasks = (tasksData || []) as Task[];
+            const parentTasks = tasks.filter(t => !t.is_subtask);
+            
+            return {
+              ...project,
+              tasks,
+              taskCounts: {
+                total: parentTasks.length,
+                todo: parentTasks.filter(t => t.status === 'todo').length,
+                inProgress: parentTasks.filter(t => t.status === 'in-progress').length,
+                review: parentTasks.filter(t => t.status === 'review').length,
+                done: parentTasks.filter(t => t.status === 'done').length,
+              }
+            };
+          } catch (projectError) {
+            console.warn(`Error processing project ${project.id}:`, projectError);
+            return {
+              ...project,
+              tasks: [],
+              taskCounts: {
+                total: 0,
+                todo: 0,
+                inProgress: 0,
+                review: 0,
+                done: 0,
+              }
+            };
+          }
         })
       );
 
@@ -198,6 +227,13 @@ export default function Tasks() {
       setAllTasks((data || []) as Task[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
+      // Don't crash the app, just show a warning and set empty tasks
+      setAllTasks([]);
+      toast({
+        title: "Warning",
+        description: "Could not load all tasks",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -345,6 +381,17 @@ export default function Tasks() {
     try {
       const task = allTasks.find(t => t.id === taskId);
       
+      // If task doesn't exist in our current list, it might already be deleted from modal
+      if (!task) {
+        await Promise.all([fetchProjects(), fetchAllTasks()]);
+        return;
+      }
+      
+      // If the sidebar is open for this task, close it first
+      if (selectedTaskId === taskId && sidebarOpen) {
+        handleSidebarClose();
+      }
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -369,8 +416,8 @@ export default function Tasks() {
         description: "Task deleted successfully",
       });
 
-      fetchProjects();
-      fetchAllTasks();
+      // Refresh data
+      await Promise.all([fetchProjects(), fetchAllTasks()]);
     } catch (err: any) {
       console.error('Error deleting task:', err);
       toast({
@@ -804,6 +851,7 @@ export default function Tasks() {
         taskId={selectedTaskId}
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
+        onTaskDelete={handleDeleteTask}
       />
     </div>
   );

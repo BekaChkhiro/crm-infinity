@@ -13,6 +13,7 @@ interface TaskViewerSidebarProps {
   taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  onTaskDelete?: (taskId: string) => void;
 }
 
 interface TaskViewerState {
@@ -24,7 +25,7 @@ interface TaskViewerState {
   error: string | null;
 }
 
-export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebarProps) {
+export function TaskViewerSidebar({ taskId, isOpen, onClose, onTaskDelete }: TaskViewerSidebarProps) {
   const [state, setState] = useState<TaskViewerState>({
     activeTab: 'details',
     isLoading: false,
@@ -114,7 +115,14 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
         .eq('id', taskId)
         .single();
 
-      if (taskError) throw taskError;
+      if (taskError) {
+        // If task doesn't exist (e.g., was deleted), close the sidebar
+        if (taskError.code === 'PGRST116') {
+          onClose();
+          return;
+        }
+        throw taskError;
+      }
 
       // Fetch subtasks
       const { data: subtasksData, error: subtasksError } = await supabase
@@ -240,7 +248,12 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
         },
         (payload) => {
           console.log('Main task updated:', payload);
-          fetchTaskData();
+          if (payload.eventType === 'DELETE') {
+            // Task was deleted, close the sidebar
+            onClose();
+          } else {
+            fetchTaskData();
+          }
         }
       )
       .on(
@@ -293,6 +306,14 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    if (onTaskDelete) {
+      // Call the parent's delete handler (which will refresh the main task list)
+      onTaskDelete(taskId);
+    }
+    // Note: Don't close sidebar here - let TaskDetailsTab handle the close timing
   };
 
   const handleTabChange = (value: string) => {
@@ -407,6 +428,8 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
                       task={state.task}
                       teamMembers={state.teamMembers}
                       onTaskUpdate={fetchTaskData}
+                      onTaskDelete={handleTaskDelete}
+                      onClose={onClose}
                     />
                   </div>
                 </TabsContent>
