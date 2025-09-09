@@ -9,8 +9,9 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Task } from './TaskCard';
-import { FolderOpen, Calendar, User, Star, Clock } from 'lucide-react';
+import { FolderOpen, Calendar, User, Star, Clock, Paperclip } from 'lucide-react';
 import { useGlobalTaskEdit } from '@/contexts/GlobalTaskEditContext';
+import { FileUpload, FileUploadItem } from '@/components/ui/file-upload';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, 'სათაური აუცილებელია').max(255, 'სათაური უნდა იყოს 255 სიმბოლოზე ნაკლები'),
@@ -38,7 +39,7 @@ interface Project {
 interface TaskFormProps {
   open: boolean | "embedded";
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: TaskFormData) => void;
+  onSubmit: (data: TaskFormData & { files?: FileUploadItem[] }) => void;
   task?: Task | null;
   teamMembers?: Array<{ id: string; name: string }>;
   loading?: boolean;
@@ -48,6 +49,8 @@ interface TaskFormProps {
 
 export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [], loading = false, projects = [], defaultProjectId }: TaskFormProps) {
   const { setMode } = useGlobalTaskEdit();
+  const [uploadedFiles, setUploadedFiles] = React.useState<FileUploadItem[]>([]);
+  
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -72,6 +75,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
         due_date: task.due_date || '',
         project_id: task.project_id,
       });
+      setUploadedFiles([]);
     } else {
       form.reset({
         title: '',
@@ -82,14 +86,20 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
         due_date: '',
         project_id: defaultProjectId || '',
       });
+      setUploadedFiles([]);
     }
   }, [task, form]);
 
   const handleSubmit = (data: TaskFormData) => {
-    onSubmit(data);
+    onSubmit({ ...data, files: uploadedFiles });
     if (!task) {
       form.reset();
+      setUploadedFiles([]);
     }
+  };
+
+  const handleFilesChange = (files: FileUploadItem[]) => {
+    setUploadedFiles(files);
   };
 
   // Keyboard shortcut handlers
@@ -288,6 +298,22 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                 />
               </div>
 
+              {/* File Upload Section */}
+              <div className="space-y-3">
+                <FormLabel className="text-sm font-medium flex items-center gap-1">
+                  <Paperclip className="h-3 w-3" />
+                  ფაილების დაბმა
+                </FormLabel>
+                <FileUpload
+                  onFilesChange={handleFilesChange}
+                  maxFiles={5}
+                  maxSize={10 * 1024 * 1024} // 10MB
+                  accept="*/*"
+                  multiple
+                  disabled={loading}
+                />
+              </div>
+
                 <DialogFooter className="px-0 pt-4 border-t bg-gray-50">
                   <Button 
                     type="button" 
@@ -446,6 +472,22 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                 <FormMessage />
               </FormItem>
             )}
+          />
+        </div>
+
+        {/* File Upload Section for embedded form */}
+        <div className="space-y-3">
+          <FormLabel className="text-sm font-medium flex items-center gap-1">
+            <Paperclip className="h-3 w-3" />
+            ფაილების დაბმა
+          </FormLabel>
+          <FileUpload
+            onFilesChange={handleFilesChange}
+            maxFiles={5}
+            maxSize={10 * 1024 * 1024} // 10MB
+            accept="*/*"
+            multiple
+            disabled={loading}
           />
         </div>
 

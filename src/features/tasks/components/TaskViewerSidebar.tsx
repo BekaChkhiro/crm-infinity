@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import { TaskDetailsTab } from './TaskViewerTabs/TaskDetailsTab';
 import { SubtasksTab } from './TaskViewerTabs/SubtasksTab';
 import { CommentsTab } from './TaskViewerTabs/CommentsTab';
+import { TaskAttachmentsTab } from './TaskViewerTabs/TaskAttachmentsTab';
 import { supabase } from '@/core/config/client';
 import { Task } from './TaskCard';
 
@@ -15,7 +16,7 @@ interface TaskViewerSidebarProps {
 }
 
 interface TaskViewerState {
-  activeTab: 'details' | 'subtasks' | 'comments';
+  activeTab: 'details' | 'subtasks' | 'comments' | 'attachments';
   isLoading: boolean;
   task: Task | null;
   subtasks: Task[];
@@ -35,6 +36,9 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
 
   // Track comment count for the comments tab badge
   const [commentCount, setCommentCount] = useState(0);
+  
+  // Track attachment count for the attachments tab badge
+  const [attachmentCount, setAttachmentCount] = useState(0);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -42,6 +46,7 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
     if (isOpen && taskId) {
       fetchTaskData();
       fetchCommentCount();
+      fetchAttachmentCount();
       cleanup = setupRealtimeSubscription();
       // Don't navigate to different URL - just open sidebar on current page
     }
@@ -201,6 +206,25 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
     }
   };
 
+  // Function to fetch attachment count for the task
+  const fetchAttachmentCount = async () => {
+    if (!taskId) return;
+    
+    try {
+      const { data: attachmentsData, error: attachmentsError } = await supabase
+        .from('task_attachments')
+        .select('*')
+        .eq('task_id', taskId);
+
+      if (attachmentsError) throw attachmentsError;
+
+      // Set the attachment count
+      setAttachmentCount(attachmentsData?.length || 0);
+    } catch (err: any) {
+      console.error('Error fetching attachment count:', err);
+    }
+  };
+
   const setupRealtimeSubscription = () => {
     if (!taskId) return undefined;
 
@@ -245,6 +269,19 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
           fetchCommentCount();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_attachments',
+          filter: `task_id=eq.${taskId}`
+        },
+        (payload) => {
+          console.log('Task attachment updated:', payload);
+          fetchAttachmentCount();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -261,7 +298,7 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
   const handleTabChange = (value: string) => {
     setState(prev => ({ 
       ...prev, 
-      activeTab: value as 'details' | 'subtasks' | 'comments' 
+      activeTab: value as 'details' | 'subtasks' | 'comments' | 'attachments'
     }));
   };
 
@@ -335,7 +372,7 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
               className="h-full flex flex-col"
             >
               <div className="px-6 pt-4 pb-2">
-                <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 h-11 rounded-lg">
+                <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1 h-11 rounded-lg">
                   <TabsTrigger 
                     value="details" 
                     className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm"
@@ -353,6 +390,12 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
                     className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm"
                   >
                     Comments ({commentCount})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="attachments"
+                    className="text-sm font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                  >
+                    Files ({attachmentCount})
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -382,6 +425,15 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose }: TaskViewerSidebar
                 <TabsContent value="comments" className="h-full m-0">
                   <div style={{ height: '80vh', overflowY: 'auto' }} className="px-4">
                     <CommentsTab
+                      taskId={state.task.id}
+                      teamMembers={state.teamMembers}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="attachments" className="h-full m-0">
+                  <div style={{ height: '80vh', overflowY: 'auto' }} className="px-4">
+                    <TaskAttachmentsTab
                       taskId={state.task.id}
                       teamMembers={state.teamMembers}
                     />

@@ -20,6 +20,8 @@ import { TasksCalendarView } from '@/features/tasks/components/TasksCalendarView
 import { FileManager } from '@/shared/components/forms/FileManager';
 import { ActivityFeed } from '@/shared/components/common/ActivityFeed';
 import { TaskViewerSidebar } from '@/features/tasks/components/TaskViewerSidebar';
+import { FileUploadService } from '@/services/fileUploadService';
+import { FileUploadItem } from '@/components/ui/file-upload';
 
 interface Project {
   id: string;
@@ -44,7 +46,6 @@ interface ProjectStats {
 interface TeamMember {
   id: string;
   name: string;
-  email?: string;
   role?: string;
 }
 
@@ -227,7 +228,7 @@ export default function AdminProjectDetails() {
       const userIds = membersData.map(m => m.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, full_name, email')
+        .select('user_id, display_name, full_name')
         .in('user_id', userIds);
 
       if (profilesError) throw profilesError;
@@ -237,7 +238,6 @@ export default function AdminProjectDetails() {
         return {
           id: member.user_id,
           name: profile?.display_name || profile?.full_name || 'Unknown User',
-          email: profile?.email,
           role: member.role
         };
       });
@@ -248,7 +248,7 @@ export default function AdminProjectDetails() {
     }
   };
 
-  const handleCreateTask = async (taskData: any) => {
+  const handleCreateTask = async (taskData: any & { files?: FileUploadItem[] }) => {
     setTaskLoading(true);
     try {
       // Map status to kanban_column to ensure tasks appear in Kanban board
@@ -264,10 +264,14 @@ export default function AdminProjectDetails() {
       const { data: taskResult, error } = await supabase
         .from('tasks')
         .insert({
-          ...taskData,
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          assignee_id: taskData.assignee_id === 'unassigned' ? null : taskData.assignee_id,
+          due_date: taskData.due_date,
           project_id: id,
           created_by: user?.id,
-          assignee_id: taskData.assignee_id === 'unassigned' ? null : taskData.assignee_id,
           kanban_column: kanban_column,
           kanban_position: 0
         })
@@ -275,6 +279,33 @@ export default function AdminProjectDetails() {
         .single();
 
       if (error) throw error;
+
+      // Upload files if any
+      if (taskData.files && taskData.files.length > 0) {
+        try {
+          const { results, allSucceeded } = await FileUploadService.uploadTaskAttachments(
+            taskResult.id,
+            taskData.files
+          );
+
+          if (!allSucceeded) {
+            const failedUploads = results.filter(r => !r.success);
+            console.warn('Some files failed to upload:', failedUploads);
+            toast({
+              title: 'Warning',
+              description: `Task created, but ${failedUploads.length} files failed to upload`,
+              variant: 'default',
+            });
+          }
+        } catch (uploadError) {
+          console.error('Error uploading files:', uploadError);
+          toast({
+            title: 'Warning',
+            description: 'Task created, but file upload failed',
+            variant: 'default',
+          });
+        }
+      }
 
       // Log activity
       await supabase.rpc('log_project_activity', {
@@ -825,7 +856,7 @@ export default function AdminProjectDetails() {
                       <div key={member.id} className="flex items-center justify-between p-2 border rounded">
                         <div>
                           <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                          <p className="text-sm text-muted-foreground">{member.role || 'Member'}</p>
                           <p className="text-xs font-mono bg-muted px-1 rounded">{member.id}</p>
                         </div>
                         <Badge variant="outline">{member.role || 'Member'}</Badge>
