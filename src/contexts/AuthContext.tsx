@@ -108,6 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? `https://crm-infinity.onrender.com/reset-password`
       : `${window.location.origin}/reset-password`;
     
+    console.log('Password reset redirect URL:', redirectUrl);
+    console.log('Environment PROD:', import.meta.env.PROD);
+    console.log('Window location origin:', window.location.origin);
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
