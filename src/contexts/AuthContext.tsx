@@ -42,9 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = import.meta.env.PROD 
-      ? `https://crm-infinity.onrender.com/`
-      : `${window.location.origin}/`;
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+    
+    const redirectUrl = isDevelopment
+      ? `${window.location.origin}/`
+      : `https://crm-infinity.onrender.com/`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -104,13 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = import.meta.env.PROD 
-      ? `https://crm-infinity.onrender.com/reset-password`
-      : `${window.location.origin}/reset-password`;
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
     
-    console.log('Password reset redirect URL:', redirectUrl);
-    console.log('Environment PROD:', import.meta.env.PROD);
-    console.log('Window location origin:', window.location.origin);
+    const redirectUrl = isDevelopment
+      ? `${window.location.origin}/reset-password`
+      : `https://crm-infinity.onrender.com/reset-password`;
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
