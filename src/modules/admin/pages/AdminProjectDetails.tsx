@@ -114,6 +114,70 @@ export default function AdminProjectDetails() {
     fetchTeamMembers();
     fetchProjectStatuses();
     fetchAdminStats();
+
+    // Set up realtime subscriptions
+    const projectStatusesChannel = supabase
+      .channel('project-statuses-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'project_statuses',
+          filter: `project_id=eq.${id}`
+        }, 
+        (payload) => {
+          console.log('Project statuses realtime change detected:', payload);
+          setTimeout(() => {
+            fetchProjectStatuses();
+            fetchTasks();
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    const tasksChannel = supabase
+      .channel('tasks-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'tasks',
+          filter: `project_id=eq.${id}`
+        }, 
+        (payload) => {
+          console.log('Tasks realtime change detected:', payload);
+          setTimeout(() => {
+            fetchTasks();
+            fetchProjectStats();
+            fetchProjectStatuses();
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    const kanbanColumnsChannel = supabase
+      .channel('kanban-columns-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'kanban_columns',
+          filter: `project_id=eq.${id}`
+        }, 
+        () => {
+          console.log('Kanban columns changed, refreshing...');
+          // Force refresh both kanban and project statuses
+          window.location.reload(); // Force full refresh for kanban changes
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(projectStatusesChannel);
+      supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(kanbanColumnsChannel);
+    };
   }, [id, user]);
 
   const fetchProject = async () => {
@@ -954,6 +1018,7 @@ export default function AdminProjectDetails() {
                     assigneeName={teamMembers.find(m => m.id === task.assignee_id)?.name}
                     creatorName={teamMembers.find(m => m.id === task.created_by)?.name}
                     teamMembers={teamMembers}
+                    projectStatuses={projectStatuses}
                     onTasksChange={() => {
                       fetchTasks();
                       fetchProjectStats();
@@ -1030,6 +1095,8 @@ export default function AdminProjectDetails() {
         taskId={selectedTaskId}
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
+        projectStatuses={projectStatuses}
+        onProjectStatusesUpdate={fetchProjectStatuses}
       />
     </div>
   );

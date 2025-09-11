@@ -103,6 +103,58 @@ export default function Tasks() {
       fetchTeamMembers(),
       fetchProjectStatuses()
     ]);
+
+    // Set up realtime subscriptions for all project statuses and tasks
+    const projectStatusesChannel = supabase
+      .channel('all-project-statuses-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'project_statuses'
+        }, 
+        (payload) => {
+          console.log('Project statuses realtime change detected:', payload);
+          // Force complete refresh
+          setTimeout(() => {
+            fetchProjectStatuses();
+            fetchAllTasks();
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    const tasksChannel = supabase
+      .channel('all-tasks-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'tasks'
+        }, 
+        (payload) => {
+          console.log('Tasks realtime change detected:', payload);
+          // Force complete refresh with slight delay
+          setTimeout(() => {
+            fetchAllTasks();
+            fetchProjectStatuses();
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    // Backup polling mechanism in case realtime doesn't work
+    const pollingInterval = setInterval(() => {
+      fetchAllTasks();
+      fetchProjectStatuses();
+    }, 5000); // Poll every 5 seconds
+
+    // Cleanup subscriptions and polling on unmount
+    return () => {
+      supabase.removeChannel(projectStatusesChannel);
+      supabase.removeChannel(tasksChannel);
+      clearInterval(pollingInterval);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -112,6 +164,38 @@ export default function Tasks() {
       localStorage.setItem('lastSelectedProject', selectedProject);
     }
   }, [selectedProject]);
+
+  useEffect(() => {
+    // Listen for task updates from other components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'taskUpdated') {
+        console.log('Task updated from another component, refreshing...');
+        fetchAllTasks();
+        fetchProjectStatuses();
+        // Clear the flag
+        localStorage.removeItem('taskUpdated');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for local task updates (same tab)
+    const checkTaskUpdates = () => {
+      if (localStorage.getItem('taskUpdated')) {
+        console.log('Local task update detected, refreshing...');
+        fetchAllTasks();
+        fetchProjectStatuses();
+        localStorage.removeItem('taskUpdated');
+      }
+    };
+
+    const localUpdateInterval = setInterval(checkTaskUpdates, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(localUpdateInterval);
+    };
+  }, []);
 
   useEffect(() => {
     // Load saved project preference
@@ -231,12 +315,14 @@ export default function Tasks() {
 
   const fetchAllTasks = async () => {
     try {
+      console.log('Fetching all tasks...');
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Tasks fetched:', data?.length || 0);
       setAllTasks((data || []) as Task[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
@@ -273,6 +359,7 @@ export default function Tasks() {
 
   const fetchProjectStatuses = async () => {
     try {
+      console.log('Fetching project statuses...');
       // Get all projects user has access to
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
@@ -317,6 +404,7 @@ export default function Tasks() {
         })
       );
 
+      console.log('Project statuses fetched:', Object.keys(statusesByProject).length, 'projects');
       setProjectStatuses(statusesByProject);
     } catch (err: any) {
       console.error('Error fetching project statuses:', err);
@@ -782,6 +870,7 @@ export default function Tasks() {
                                 assigneeName={teamMembers.find(m => m.id === task.assignee_id)?.name}
                                 creatorName={teamMembers.find(m => m.id === task.created_by)?.name}
                                 teamMembers={teamMembers}
+                                projectStatuses={projectStatuses[task.project_id] || []}
                                 onTasksChange={() => {
                                   fetchProjects();
                                   fetchAllTasks();
@@ -827,6 +916,7 @@ export default function Tasks() {
                       assigneeName={teamMembers.find(m => m.id === task.assignee_id)?.name}
                       creatorName={teamMembers.find(m => m.id === task.created_by)?.name}
                       teamMembers={teamMembers}
+                      projectStatuses={projectStatuses[task.project_id] || []}
                       onTasksChange={() => {
                         fetchProjects();
                         fetchAllTasks();
@@ -921,6 +1011,15 @@ export default function Tasks() {
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
         onTaskDelete={handleDeleteTask}
+        projectStatuses={
+          selectedTaskId 
+            ? (() => {
+                const task = filteredTasks.find(t => t.id === selectedTaskId);
+                return task ? projectStatuses[task.project_id] || [] : [];
+              })()
+            : []
+        }
+        onProjectStatusesUpdate={fetchProjectStatuses}
       />
 
       {/* Status Management Dialog */}

@@ -45,6 +45,7 @@ interface TaskCardProps extends TaskCardClickHandler {
   assigneeName?: string;
   creatorName?: string;
   teamMembers?: Array<{ id: string; name: string }>;
+  projectStatuses?: Array<{ id: string; name: string; color: string }>;
   onTasksChange?: () => void;
   showSubtasks?: boolean;
 }
@@ -78,6 +79,7 @@ export function TaskCard({
   assigneeName, 
   creatorName, 
   teamMembers = [], 
+  projectStatuses = [],
   onTasksChange,
   showSubtasks = true,
   onTaskClick
@@ -86,6 +88,35 @@ export function TaskCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [subtaskCount, setSubtaskCount] = useState(0);
   const [hasSubtasks, setHasSubtasks] = useState(false);
+
+  // Get status display info from projectStatuses or fallback to defaults
+  const getStatusDisplay = () => {
+    console.log('TaskCard getStatusDisplay:', { 
+      taskStatus: task.status, 
+      projectStatusesLength: projectStatuses.length,
+      projectStatuses: projectStatuses.map(s => ({ name: s.name, color: s.color }))
+    });
+    
+    if (projectStatuses.length > 0) {
+      const projectStatus = projectStatuses.find(s => s.name === task.status);
+      if (projectStatus) {
+        return {
+          label: projectStatus.name,
+          color: projectStatus.color,
+          className: 'text-white' // Use white text with custom background color
+        };
+      }
+    }
+    
+    // Fallback to default status display
+    return {
+      label: statusLabels[task.status] || task.status,
+      color: null,
+      className: statusColors[task.status] || 'bg-muted text-muted-foreground'
+    };
+  };
+
+  const statusDisplay = getStatusDisplay();
   const [commentCount, setCommentCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
 
@@ -177,8 +208,12 @@ export function TaskCard({
         
         <CardContent className="pt-0 space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Badge className={statusColors[task.status]} variant="secondary">
-              {statusLabels[task.status]}
+            <Badge 
+              className={statusDisplay.className} 
+              variant="secondary"
+              style={statusDisplay.color ? { backgroundColor: statusDisplay.color } : {}}
+            >
+              {statusDisplay.label}
             </Badge>
             <Badge className={priorityColors[task.priority]} variant="secondary">
               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}

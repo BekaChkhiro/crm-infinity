@@ -14,6 +14,8 @@ interface TaskViewerSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskDelete?: (taskId: string) => void;
+  projectStatuses?: Array<{ id: string; name: string; color: string }>;
+  onProjectStatusesUpdate?: () => void;
 }
 
 interface TaskViewerState {
@@ -25,7 +27,7 @@ interface TaskViewerState {
   error: string | null;
 }
 
-export function TaskViewerSidebar({ taskId, isOpen, onClose, onTaskDelete }: TaskViewerSidebarProps) {
+export function TaskViewerSidebar({ taskId, isOpen, onClose, onTaskDelete, projectStatuses = [], onProjectStatusesUpdate }: TaskViewerSidebarProps) {
   const [state, setState] = useState<TaskViewerState>({
     activeTab: 'details',
     isLoading: false,
@@ -428,7 +430,11 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose, onTaskDelete }: Tas
                     <TaskDetailsTab 
                       task={state.task}
                       teamMembers={state.teamMembers}
-                      onTaskUpdate={fetchTaskData}
+                      projectStatuses={projectStatuses}
+                      onTaskUpdate={() => {
+                        fetchTaskData();
+                        onProjectStatusesUpdate?.();
+                      }}
                       onTaskDelete={handleTaskDelete}
                       onClose={onClose}
                     />

@@ -45,6 +45,9 @@ export function useTaskAutoSave({
       setLastSaved(new Date());
       onTaskUpdate();
       
+      // Signal other components that task was updated
+      localStorage.setItem('taskUpdated', Date.now().toString());
+      
       // Show subtle success toast
       toast({
         title: "შეინახა",

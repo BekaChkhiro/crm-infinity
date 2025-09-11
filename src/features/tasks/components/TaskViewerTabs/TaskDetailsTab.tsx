@@ -19,6 +19,7 @@ import { useTaskAutoSave } from '../../hooks/useTaskAutoSave';
 interface TaskDetailsTabProps {
   task: Task;
   teamMembers: Array<{ id: string; name: string; email?: string }>;
+  projectStatuses?: Array<{ id: string; name: string; color: string }>;
   onTaskUpdate: () => void;
   onTaskDelete?: (taskId: string) => void;
   onClose?: () => void;
@@ -47,7 +48,7 @@ const statusConfig = {
   },
 };
 
-const statusOptions = [
+const defaultStatusOptions = [
   { value: 'todo', label: 'დაგეგმილი', icon: <Timer className="h-3 w-3" />, color: 'bg-muted/50 text-muted-foreground border-muted' },
   { value: 'in-progress', label: 'მიმდინარე', icon: <Target className="h-3 w-3" />, color: 'bg-blue-50 text-blue-700 border-blue-200' },
   { value: 'review', label: 'გადასამოწმებელი', icon: <AlertCircle className="h-3 w-3" />, color: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -80,17 +81,40 @@ const priorityOptions = [
   { value: 'critical', label: 'კრიტიკული', icon: <div className="h-2 w-2 rounded-full bg-red-500"></div>, color: 'bg-red-50 text-red-700 border-red-200' }
 ];
 
-export function TaskDetailsTab({ task, teamMembers, onTaskUpdate, onTaskDelete, onClose }: TaskDetailsTabProps) {
+export function TaskDetailsTab({ task, teamMembers, projectStatuses = [], onTaskUpdate, onTaskDelete, onClose }: TaskDetailsTabProps) {
   const { toast } = useToast();
   const { openTaskEdit } = useGlobalTaskEdit();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [localTask, setLocalTask] = useState(task);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Create status options from project statuses or use defaults
+  const statusOptions = projectStatuses.length > 0 
+    ? projectStatuses.map(status => ({
+        value: status.name,
+        label: status.name,
+        icon: <div className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }} />,
+        color: `border-2` // Will use inline styles for background color
+      }))
+    : defaultStatusOptions;
   
   const { saveField, validators, isSaving, lastSaved } = useTaskAutoSave({
     taskId: task.id,
     onTaskUpdate
   });
+
+  // Custom status validator that uses projectStatuses
+  const customStatusValidator = (value: string) => {
+    if (projectStatuses.length > 0) {
+      const validStatuses = projectStatuses.map(s => s.name);
+      if (!validStatuses.includes(value)) return 'არასწორი სტატუსი';
+    } else {
+      // Fallback to default validation
+      const validStatuses = ['todo', 'in-progress', 'review', 'done'];
+      if (!validStatuses.includes(value)) return 'არასწორი სტატუსი';
+    }
+    return null;
+  };
   
   const assignee = teamMembers.find(member => member.id === localTask.assignee_id);
   
@@ -299,7 +323,7 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate, onTaskDelete, 
                   onSave={(value) => saveField('status', value)}
                   onCancel={handleCancelEdit}
                   onEdit={() => handleEditField('status')}
-                  validator={validators.status}
+                  validator={customStatusValidator}
                   instantSave={true}
                 />
                 <InlineEditableField
