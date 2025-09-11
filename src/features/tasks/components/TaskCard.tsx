@@ -21,7 +21,8 @@ export interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'todo' | 'in-progress' | 'review' | 'done';
+  notes?: string | null;
+  status: string; // Can be 'todo' | 'in-progress' | 'review' | 'done' or custom status like 'custom-column-name-position'
   priority: 'low' | 'medium' | 'high' | 'critical';
   assignee_id: string | null;
   created_by: string;

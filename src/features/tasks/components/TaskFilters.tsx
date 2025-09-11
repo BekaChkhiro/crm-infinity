@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Search, X, Filter } from 'lucide-react';
+import { createStatusMapping } from '@/features/kanban/utils/statusMapping';
 
 export interface TaskFilters {
   search: string;
@@ -20,18 +21,17 @@ interface TaskFiltersProps {
   teamMembers?: Array<{ id: string; name: string }>;
   taskCounts?: {
     total: number;
-    todo: number;
-    inProgress: number;
-    review: number;
-    done: number;
+    [status: string]: number; // Dynamic status counts
   };
+  kanbanColumns?: Array<{ id: string; name: string; color: string }>;
 }
 
 export function TaskFiltersComponent({ 
   filters, 
   onFiltersChange, 
   teamMembers = [],
-  taskCounts
+  taskCounts,
+  kanbanColumns = []
 }: TaskFiltersProps) {
   const updateFilter = (key: keyof TaskFilters, value: string) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -79,10 +79,27 @@ export function TaskFiltersComponent({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="todo">To Do</SelectItem>
-            <SelectItem value="in-progress">In Progress</SelectItem>
-            <SelectItem value="review">In Review</SelectItem>
-            <SelectItem value="done">Completed</SelectItem>
+            {kanbanColumns.length > 0 ? (
+              kanbanColumns.map((column) => (
+                <SelectItem key={column.id} value={column.name}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: column.color }}
+                    />
+                    {column.name}
+                  </div>
+                </SelectItem>
+              ))
+            ) : (
+              // Fallback to default statuses if no columns available
+              <>
+                <SelectItem value="To Do">To Do</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Review">Review</SelectItem>
+                <SelectItem value="Done">Done</SelectItem>
+              </>
+            )}
           </SelectContent>
         </Select>
 
@@ -142,15 +159,15 @@ export function TaskFiltersComponent({
       {taskCounts && (
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">Total: {taskCounts.total}</Badge>
-          <Badge variant="secondary">To Do: {taskCounts.todo}</Badge>
+          <Badge variant="secondary">To Do: {taskCounts['To Do'] || 0}</Badge>
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-            In Progress: {taskCounts.inProgress}
+            In Progress: {taskCounts['In Progress'] || 0}
           </Badge>
           <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-            In Review: {taskCounts.review}
+            Review: {taskCounts['Review'] || 0}
           </Badge>
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-            Completed: {taskCounts.done}
+            Done: {taskCounts['Done'] || 0}
           </Badge>
         </div>
       )}

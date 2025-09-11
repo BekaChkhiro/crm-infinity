@@ -96,7 +96,13 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate, onTaskDelete, 
   
   // Update local task when prop changes
   React.useEffect(() => {
-    setLocalTask(task);
+    // Ensure notes field exists with fallback
+    const updatedTask = {
+      ...task,
+      notes: task.notes || null
+    };
+    setLocalTask(updatedTask);
+    console.log('TaskDetailsTab: Updated task data:', updatedTask);
   }, [task]);
 
   const getInitials = (name: string) => {
@@ -339,6 +345,27 @@ export function TaskDetailsTab({ task, teamMembers, onTaskUpdate, onTaskDelete, 
               onEdit={() => handleEditField('description')}
               placeholder="შეიყვანეთ დავალების აღწერა"
               validator={validators.description}
+              className="text-muted-foreground leading-relaxed"
+              instantSave={true}
+            />
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                <span>შენიშვნები</span>
+              </h4>
+            </div>
+            <InlineEditableField
+              type="textarea"
+              value={localTask.notes}
+              isEditing={editingField === 'notes'}
+              onChange={(value) => handleFieldUpdate('notes', value)}
+              onSave={(value) => saveField('notes', value)}
+              onCancel={handleCancelEdit}
+              onEdit={() => handleEditField('notes')}
+              placeholder="შეიყვანეთ შენიშვნები ამ დავალებაზე"
+              validator={validators.notes}
               className="text-muted-foreground leading-relaxed"
               instantSave={true}
             />

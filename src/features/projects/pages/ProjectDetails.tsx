@@ -71,6 +71,13 @@ export default function ProjectDetails() {
   const [activeTab, setActiveTab] = useState('overview');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [kanbanColumns, setKanbanColumns] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  const [projectStatuses, setProjectStatuses] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  
+  // Debug: log projectStatuses changes
+  useEffect(() => {
+    console.log('ProjectDetails projectStatuses updated:', projectStatuses);
+  }, [projectStatuses]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [taskLoading, setTaskLoading] = useState(false);
@@ -100,6 +107,8 @@ export default function ProjectDetails() {
     fetchProjectStats();
     fetchTasks();
     fetchTeamMembers();
+    fetchKanbanColumns();
+    fetchProjectStatuses();
   }, [id, user]);
 
   const fetchProject = async () => {
@@ -219,15 +228,8 @@ export default function ProjectDetails() {
   const handleCreateTask = async (taskData: any & { files?: FileUploadItem[] }) => {
     setTaskLoading(true);
     try {
-      // Map status to kanban_column to ensure tasks appear in Kanban board
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[taskData.status] || 'to-do';
+      // Status is the column name itself - no mapping needed
+      const kanban_column = taskData.status.toLowerCase().replace(/\s+/g, '-');
       
       const { data: taskResult, error } = await supabase
         .from('tasks')
@@ -293,6 +295,7 @@ export default function ProjectDetails() {
       setTaskFormOpen(false);
       fetchTasks();
       fetchProjectStats();
+      fetchProjectStatuses();
     } catch (err: any) {
       console.error('Error creating task:', err);
       toast({
@@ -310,15 +313,8 @@ export default function ProjectDetails() {
     
     setTaskLoading(true);
     try {
-      // Map status to kanban_column
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[taskData.status] || 'to-do';
+      // Status is the column name itself
+      const kanban_column = taskData.status.toLowerCase().replace(/\s+/g, '-');
       
       const { error } = await supabase
         .from('tasks')
@@ -350,6 +346,7 @@ export default function ProjectDetails() {
       setEditingTask(null);
       fetchTasks();
       fetchProjectStats();
+      fetchProjectStatuses();
     } catch (err: any) {
       console.error('Error updating task:', err);
       toast({
@@ -359,6 +356,73 @@ export default function ProjectDetails() {
       });
     } finally {
       setTaskLoading(false);
+    }
+  };
+
+  const fetchKanbanColumns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('kanban_columns')
+        .select('id, name, color')
+        .eq('project_id', id)
+        .order('position');
+
+      if (error) throw error;
+      setKanbanColumns(data || []);
+    } catch (err: any) {
+      console.error('Error fetching kanban columns:', err);
+    }
+  };
+
+  const fetchProjectStatuses = async () => {
+    try {
+      console.log('fetchProjectStatuses called for projectId:', id);
+      const { data, error } = await supabase
+        .from('project_statuses')
+        .select('id, name, color')
+        .eq('project_id', id)
+        .order('position');
+      
+      console.log('fetchProjectStatuses result:', { data, error });
+
+      if (error) {
+        // If project_statuses table doesn't exist or no data, use default statuses
+        console.log('No project statuses found, using defaults', error);
+        const defaultStatuses = [
+          { id: '1', name: 'To Do', color: '#6b7280' },
+          { id: '2', name: 'In Progress', color: '#0ea5e9' },
+          { id: '3', name: 'Review', color: '#f59e0b' },
+          { id: '4', name: 'Done', color: '#22c55e' }
+        ];
+        console.log('Setting default projectStatuses:', defaultStatuses);
+        setProjectStatuses(defaultStatuses);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        // Use default statuses if no custom ones are defined
+        console.log('No custom statuses found, using defaults');
+        const defaultStatuses = [
+          { id: '1', name: 'To Do', color: '#6b7280' },
+          { id: '2', name: 'In Progress', color: '#0ea5e9' },
+          { id: '3', name: 'Review', color: '#f59e0b' },
+          { id: '4', name: 'Done', color: '#22c55e' }
+        ];
+        console.log('Setting default projectStatuses:', defaultStatuses);
+        setProjectStatuses(defaultStatuses);
+      } else {
+        console.log('Found custom project statuses:', data);
+        setProjectStatuses(data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching project statuses:', err);
+      // Fallback to default statuses
+      setProjectStatuses([
+        { id: '1', name: 'To Do', color: '#6b7280' },
+        { id: '2', name: 'In Progress', color: '#0ea5e9' },
+        { id: '3', name: 'Review', color: '#f59e0b' },
+        { id: '4', name: 'Done', color: '#22c55e' }
+      ]);
     }
   };
 
@@ -376,7 +440,7 @@ export default function ProjectDetails() {
     }
   };
 
-  const handleStatusChange = async (taskId: string, status: Task['status']) => {
+  const handleStatusChange = async (taskId: string, status: string) => {
     try {
       // Get task title for activity log
       const { data: taskData } = await supabase
@@ -385,15 +449,8 @@ export default function ProjectDetails() {
         .eq('id', taskId)
         .single();
 
-      // Map status to kanban_column
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[status] || 'to-do';
+      // Status is the column name itself
+      const kanban_column = status.toLowerCase().replace(/\s+/g, '-');
 
       const { error } = await supabase
         .from('tasks')
@@ -716,6 +773,7 @@ export default function ProjectDetails() {
               onFiltersChange={setFilters}
               teamMembers={teamMembers}
               taskCounts={taskCounts}
+              kanbanColumns={kanbanColumns}
             />
 
             {filteredTasks.length === 0 ? (
@@ -770,7 +828,10 @@ export default function ProjectDetails() {
               teamMembers={teamMembers}
               onTaskEdit={openEditTaskForm}
               onCreateTask={openCreateTaskForm}
-              onTasksChange={fetchTasks}
+              onTasksChange={() => {
+                fetchTasks();
+                fetchProjectStatuses();
+              }}
               onTaskClick={handleTaskClick}
             />
           </TabsContent>
@@ -815,6 +876,8 @@ export default function ProjectDetails() {
         task={editingTask}
         teamMembers={teamMembers}
         loading={taskLoading}
+        kanbanColumns={kanbanColumns}
+        projectStatuses={projectStatuses}
         />
 
       {/* Task Viewer Sidebar */}

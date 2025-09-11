@@ -12,11 +12,12 @@ import { Task } from './TaskCard';
 import { FolderOpen, Calendar, User, Star, Clock, Paperclip } from 'lucide-react';
 import { useGlobalTaskEdit } from '@/contexts/GlobalTaskEditContext';
 import { FileUpload, FileUploadItem } from '@/components/ui/file-upload';
+import { createStatusMapping } from '@/features/kanban/utils/statusMapping';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, 'სათაური აუცილებელია').max(255, 'სათაური უნდა იყოს 255 სიმბოლოზე ნაკლები'),
   description: z.string().optional(),
-  status: z.enum(['todo', 'in-progress', 'review', 'done']),
+  status: z.string().min(1, 'Status is required'),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   assignee_id: z.string().optional(),
   due_date: z.string().refine((val) => {
@@ -45,18 +46,25 @@ interface TaskFormProps {
   loading?: boolean;
   projects?: Array<Project>;
   defaultProjectId?: string;
+  kanbanColumns?: Array<{ id: string; name: string; color: string }>;
+  projectStatuses?: Array<{ id: string; name: string; color: string }>;
 }
 
-export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [], loading = false, projects = [], defaultProjectId }: TaskFormProps) {
+export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [], loading = false, projects = [], defaultProjectId, kanbanColumns = [], projectStatuses = [] }: TaskFormProps) {
   const { setMode } = useGlobalTaskEdit();
   const [uploadedFiles, setUploadedFiles] = React.useState<FileUploadItem[]>([]);
+  
+  // Debug: log projectStatuses when component renders
+  React.useEffect(() => {
+    console.log('TaskForm projectStatuses:', projectStatuses);
+  }, [projectStatuses]);
   
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: task?.title || '',
       description: task?.description || '',
-      status: task?.status || 'todo',
+      status: task?.status || 'To Do', // Use fixed default here, will be updated by useEffect
       priority: task?.priority || 'medium',
       assignee_id: task?.assignee_id || 'unassigned',
       due_date: task?.due_date || '',
@@ -77,10 +85,12 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
       });
       setUploadedFiles([]);
     } else {
+      // Only reset when creating new task and projectStatuses are available
+      const defaultStatus = projectStatuses.length > 0 ? projectStatuses[0].name : 'To Do';
       form.reset({
         title: '',
         description: '',
-        status: 'todo',
+        status: defaultStatus,
         priority: 'medium',
         assignee_id: 'unassigned',
         due_date: '',
@@ -88,7 +98,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
       });
       setUploadedFiles([]);
     }
-  }, [task, form]);
+  }, [task, projectStatuses.length]); // Use length instead of the whole array to prevent unnecessary re-renders
 
   const handleSubmit = (data: TaskFormData) => {
     onSubmit({ ...data, files: uploadedFiles });
@@ -189,10 +199,27 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="todo">დაგეგმილი</SelectItem>
-                          <SelectItem value="in-progress">მიმდინარე</SelectItem>
-                          <SelectItem value="review">გადასამოწმებელი</SelectItem>
-                          <SelectItem value="done">დასრულებული</SelectItem>
+                          {projectStatuses.length > 0 ? (
+                            projectStatuses.map((status) => (
+                              <SelectItem key={status.id} value={status.name}>
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-3 h-3 rounded-full" 
+                                    style={{ backgroundColor: status.color }}
+                                  />
+                                  {status.name}
+                                </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            // Fallback to default statuses if no project statuses available
+                            <>
+                              <SelectItem value="To Do">To Do</SelectItem>
+                              <SelectItem value="In Progress">In Progress</SelectItem>
+                              <SelectItem value="Review">Review</SelectItem>
+                              <SelectItem value="Done">Done</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -397,10 +424,26 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="review">Review</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
+                    {projectStatuses.length > 0 ? (
+                      projectStatuses.map((status) => (
+                        <SelectItem key={status.id} value={status.name}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: status.color }}
+                            />
+                            {status.name}
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="To Do">To Do</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Review">Review</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

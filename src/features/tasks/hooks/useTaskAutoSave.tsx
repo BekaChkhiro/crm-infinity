@@ -105,6 +105,11 @@ export function useTaskAutoSave({
       return null;
     },
     
+    notes: (value: string) => {
+      if (value && value.length > 5000) return 'შენიშვნები უნდა იყოს 5000 სიმბოლოზე ნაკლები';
+      return null;
+    },
+    
     due_date: (value: string) => {
       if (!value) return null;
       const date = new Date(value);

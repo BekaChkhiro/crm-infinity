@@ -82,6 +82,7 @@ export default function AdminProjectDetails() {
   const [activeTab, setActiveTab] = useState('overview');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [taskLoading, setTaskLoading] = useState(false);
@@ -111,6 +112,7 @@ export default function AdminProjectDetails() {
     fetchProjectStats();
     fetchTasks();
     fetchTeamMembers();
+    fetchProjectStatuses();
     fetchAdminStats();
   }, [id, user]);
 
@@ -245,6 +247,39 @@ export default function AdminProjectDetails() {
       setTeamMembers(members);
     } catch (err: any) {
       console.error('Error fetching team members:', err);
+    }
+  };
+
+  const fetchProjectStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('project_statuses')
+        .select('id, name, color')
+        .eq('project_id', id)
+        .order('position');
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        // Use default statuses if none exist
+        setProjectStatuses([
+          { id: 'default-1', name: 'To Do', color: '#6b7280' },
+          { id: 'default-2', name: 'In Progress', color: '#0ea5e9' },
+          { id: 'default-3', name: 'Review', color: '#f59e0b' },
+          { id: 'default-4', name: 'Done', color: '#22c55e' }
+        ]);
+      } else {
+        setProjectStatuses(data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching project statuses:', err);
+      // Fallback to default statuses
+      setProjectStatuses([
+        { id: 'default-1', name: 'To Do', color: '#6b7280' },
+        { id: 'default-2', name: 'In Progress', color: '#0ea5e9' },
+        { id: 'default-3', name: 'Review', color: '#f59e0b' },
+        { id: 'default-4', name: 'Done', color: '#22c55e' }
+      ]);
     }
   };
 
@@ -922,6 +957,7 @@ export default function AdminProjectDetails() {
                     onTasksChange={() => {
                       fetchTasks();
                       fetchProjectStats();
+                      fetchProjectStatuses();
                     }}
                     showSubtasks={true}
                     onTaskClick={handleTaskClick}
@@ -938,7 +974,10 @@ export default function AdminProjectDetails() {
               teamMembers={teamMembers}
               onTaskEdit={openEditTaskForm}
               onCreateTask={openCreateTaskForm}
-              onTasksChange={fetchTasks}
+              onTasksChange={() => {
+                fetchTasks();
+                fetchProjectStatuses();
+              }}
               onTaskClick={handleTaskClick}
             />
           </TabsContent>
@@ -982,6 +1021,7 @@ export default function AdminProjectDetails() {
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
         task={editingTask}
         teamMembers={teamMembers}
+        projectStatuses={projectStatuses}
         loading={taskLoading}
         />
 

@@ -133,6 +133,7 @@ export function TaskViewerSidebar({ taskId, isOpen, onClose, onTaskDelete }: Tas
 
       if (subtasksError) throw subtasksError;
 
+      console.log('Fetched task data from database:', taskData);
       console.log('Fetched subtasks from database:', subtasksData);
 
       // Fetch team members for the project - use a simpler approach

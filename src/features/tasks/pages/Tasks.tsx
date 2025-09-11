@@ -14,6 +14,7 @@ import { TaskFiltersComponent, TaskFilters } from '@/features/tasks/components/T
 import { TaskViewerSidebar } from '@/features/tasks/components/TaskViewerSidebar';
 import { KanbanBoard } from '@/features/kanban/components/KanbanBoard';
 import { TasksCalendarView } from '@/features/tasks/components/TasksCalendarView';
+import { StatusManagement } from '@/features/project/components/StatusManagement';
 import { useToast } from '@/shared/hooks/use-toast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -27,7 +28,8 @@ import {
   Grid3X3,
   List,
   Users,
-  ListTodo
+  ListTodo,
+  Settings
 } from 'lucide-react';
 
 interface Project {
@@ -43,10 +45,7 @@ interface ProjectWithTasks extends Project {
   tasks: Task[];
   taskCounts: {
     total: number;
-    todo: number;
-    inProgress: number;
-    review: number;
-    done: number;
+    [status: string]: number; // Dynamic status counts
   };
 }
 
@@ -68,6 +67,7 @@ export default function Tasks() {
   const [projects, setProjects] = useState<ProjectWithTasks[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<{ [projectId: string]: Array<{ id: string; name: string; color: string }> }>({});
   const [loading, setLoading] = useState(true);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -76,6 +76,7 @@ export default function Tasks() {
   const [lastSelectedProject, setLastSelectedProject] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grouped' | 'list' | 'kanban' | 'calendar'>('grouped');
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [statusManagementOpen, setStatusManagementOpen] = useState(false);
   
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',
@@ -99,7 +100,8 @@ export default function Tasks() {
     Promise.all([
       fetchProjects(),
       fetchAllTasks(),
-      fetchTeamMembers()
+      fetchTeamMembers(),
+      fetchProjectStatuses()
     ]);
   }, [user]);
 
@@ -166,10 +168,10 @@ export default function Tasks() {
                 tasks: [],
                 taskCounts: {
                   total: 0,
-                  todo: 0,
-                  inProgress: 0,
-                  review: 0,
-                  done: 0,
+                  'To Do': 0,
+                  'In Progress': 0,
+                  'Review': 0,
+                  'Done': 0,
                 }
               };
             }
@@ -177,16 +179,27 @@ export default function Tasks() {
             const tasks = (tasksData || []) as Task[];
             const parentTasks = tasks.filter(t => !t.is_subtask);
             
+            // Calculate task counts dynamically based on project statuses
+            const taskCounts: { total: number; [status: string]: number } = { total: parentTasks.length };
+            
+            // Get all unique statuses from tasks
+            const uniqueStatuses = new Set(parentTasks.map(t => t.status));
+            uniqueStatuses.forEach(status => {
+              taskCounts[status] = parentTasks.filter(t => t.status === status).length;
+            });
+            
+            // Ensure default statuses exist with 0 count if no tasks have them
+            const defaultStatuses = ['To Do', 'In Progress', 'Review', 'Done'];
+            defaultStatuses.forEach(status => {
+              if (!taskCounts[status]) {
+                taskCounts[status] = 0;
+              }
+            });
+            
             return {
               ...project,
               tasks,
-              taskCounts: {
-                total: parentTasks.length,
-                todo: parentTasks.filter(t => t.status === 'todo').length,
-                inProgress: parentTasks.filter(t => t.status === 'in-progress').length,
-                review: parentTasks.filter(t => t.status === 'review').length,
-                done: parentTasks.filter(t => t.status === 'done').length,
-              }
+              taskCounts
             };
           } catch (projectError) {
             console.warn(`Error processing project ${project.id}:`, projectError);
@@ -195,10 +208,10 @@ export default function Tasks() {
               tasks: [],
               taskCounts: {
                 total: 0,
-                todo: 0,
-                inProgress: 0,
-                review: 0,
-                done: 0,
+                'To Do': 0,
+                'In Progress': 0,
+                'Review': 0,
+                'Done': 0,
               }
             };
           }
@@ -258,20 +271,64 @@ export default function Tasks() {
     }
   };
 
+  const fetchProjectStatuses = async () => {
+    try {
+      // Get all projects user has access to
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('id')
+        .order('name');
+
+      if (projectsError) throw projectsError;
+
+      const statusesByProject: { [projectId: string]: Array<{ id: string; name: string; color: string }> } = {};
+
+      // Fetch statuses for each project
+      await Promise.all(
+        (projectsData || []).map(async (project) => {
+          try {
+            const { data: statusData, error: statusError } = await supabase
+              .from('project_statuses')
+              .select('id, name, color')
+              .eq('project_id', project.id)
+              .order('position');
+
+            if (statusError || !statusData || statusData.length === 0) {
+              // Use default statuses if no custom ones exist
+              statusesByProject[project.id] = [
+                { id: '1', name: 'To Do', color: '#6b7280' },
+                { id: '2', name: 'In Progress', color: '#0ea5e9' },
+                { id: '3', name: 'Review', color: '#f59e0b' },
+                { id: '4', name: 'Done', color: '#22c55e' }
+              ];
+            } else {
+              statusesByProject[project.id] = statusData;
+            }
+          } catch (err) {
+            console.error(`Error fetching statuses for project ${project.id}:`, err);
+            // Fallback to default statuses
+            statusesByProject[project.id] = [
+              { id: '1', name: 'To Do', color: '#6b7280' },
+              { id: '2', name: 'In Progress', color: '#0ea5e9' },
+              { id: '3', name: 'Review', color: '#f59e0b' },
+              { id: '4', name: 'Done', color: '#22c55e' }
+            ];
+          }
+        })
+      );
+
+      setProjectStatuses(statusesByProject);
+    } catch (err: any) {
+      console.error('Error fetching project statuses:', err);
+    }
+  };
+
   const handleCreateTask = async (taskData: any) => {
     setTaskLoading(true);
     try {
       const projectId = taskData.project_id || lastSelectedProject;
       
-      // Map status to kanban_column to ensure tasks appear in Kanban board
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[taskData.status] || 'to-do';
+      // Status and kanban columns are now unified
       
       const { data: taskResult, error } = await supabase
         .from('tasks')
@@ -280,7 +337,6 @@ export default function Tasks() {
           project_id: projectId,
           created_by: user?.id,
           assignee_id: taskData.assignee_id === 'unassigned' ? null : taskData.assignee_id,
-          kanban_column: kanban_column, // Add kanban_column mapping
           kanban_position: 0 // Add default kanban position
         })
         .select()
@@ -308,6 +364,7 @@ export default function Tasks() {
       setTaskFormOpen(false);
       fetchProjects();
       fetchAllTasks();
+      fetchProjectStatuses();
     } catch (err: any) {
       console.error('Error creating task:', err);
       toast({
@@ -325,22 +382,13 @@ export default function Tasks() {
     
     setTaskLoading(true);
     try {
-      // Map status to kanban_column
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[taskData.status] || 'to-do';
+      // Status and kanban columns are now unified
       
       const { error } = await supabase
         .from('tasks')
         .update({
           ...taskData,
-          assignee_id: taskData.assignee_id === 'unassigned' ? null : taskData.assignee_id,
-          kanban_column: kanban_column // Update kanban_column when editing
+          assignee_id: taskData.assignee_id === 'unassigned' ? null : taskData.assignee_id
         })
         .eq('id', editingTask.id);
 
@@ -365,6 +413,7 @@ export default function Tasks() {
       setEditingTask(null);
       fetchProjects();
       fetchAllTasks();
+      fetchProjectStatuses();
     } catch (err: any) {
       console.error('Error updating task:', err);
       toast({
@@ -383,7 +432,7 @@ export default function Tasks() {
       
       // If task doesn't exist in our current list, it might already be deleted from modal
       if (!task) {
-        await Promise.all([fetchProjects(), fetchAllTasks()]);
+        await Promise.all([fetchProjects(), fetchAllTasks(), fetchProjectStatuses()]);
         return;
       }
       
@@ -417,7 +466,7 @@ export default function Tasks() {
       });
 
       // Refresh data
-      await Promise.all([fetchProjects(), fetchAllTasks()]);
+      await Promise.all([fetchProjects(), fetchAllTasks(), fetchProjectStatuses()]);
     } catch (err: any) {
       console.error('Error deleting task:', err);
       toast({
@@ -432,21 +481,12 @@ export default function Tasks() {
     try {
       const task = allTasks.find(t => t.id === taskId);
       
-      // Map status to kanban_column
-      const statusToColumnMap: { [key: string]: string } = {
-        'todo': 'to-do',
-        'in-progress': 'in-progress',
-        'review': 'review',
-        'done': 'done'
-      };
-      
-      const kanban_column = statusToColumnMap[status] || 'to-do';
+      // Status and kanban columns are now unified
       
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          status,
-          kanban_column: kanban_column 
+          status
         })
         .eq('id', taskId);
 
@@ -641,10 +681,22 @@ export default function Tasks() {
                 </TabsList>
               </Tabs>
 
-              <Button onClick={openCreateTaskForm}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Task
-              </Button>
+              <div className="flex gap-2">
+                {selectedProject !== 'all' && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setStatusManagementOpen(true)}
+                    size="sm"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    სტატუსების მართვა
+                  </Button>
+                )}
+                <Button onClick={openCreateTaskForm}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  ახალი დავალება
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -658,6 +710,15 @@ export default function Tasks() {
           onFiltersChange={setFilters}
           teamMembers={teamMembers}
           taskCounts={overallTaskCounts}
+          kanbanColumns={
+            selectedProject !== 'all' && projectStatuses[selectedProject]
+              ? projectStatuses[selectedProject].map(status => ({
+                  id: status.id,
+                  name: status.name,
+                  color: status.color
+                }))
+              : []
+          }
         />
 
         {/* Task Views */}
@@ -700,7 +761,7 @@ export default function Tasks() {
                               {projectTasks.length} tasks
                             </Badge>
                             <Badge variant="secondary">
-                              {project.taskCounts.done}/{project.taskCounts.total} completed
+                              {project.taskCounts['Done'] || 0}/{project.taskCounts.total} completed
                             </Badge>
                           </div>
                         </div>
@@ -791,6 +852,7 @@ export default function Tasks() {
                 onTasksChange={() => {
                   fetchProjects();
                   fetchAllTasks();
+                  fetchProjectStatuses();
                 }}
                 onTaskClick={handleTaskClick}
               />
@@ -845,6 +907,13 @@ export default function Tasks() {
         loading={taskLoading}
         projects={projects}
         defaultProjectId={lastSelectedProject}
+        projectStatuses={
+          editingTask && editingTask.project_id 
+            ? projectStatuses[editingTask.project_id] || []
+            : lastSelectedProject 
+            ? projectStatuses[lastSelectedProject] || [] 
+            : []
+        }
       />
       {/* Task Viewer Sidebar */}
       <TaskViewerSidebar
@@ -853,6 +922,20 @@ export default function Tasks() {
         onClose={handleSidebarClose}
         onTaskDelete={handleDeleteTask}
       />
+
+      {/* Status Management Dialog */}
+      {selectedProject !== 'all' && (
+        <StatusManagement
+          open={statusManagementOpen}
+          onOpenChange={setStatusManagementOpen}
+          projectId={selectedProject}
+          onSuccess={() => {
+            fetchProjectStatuses();
+            fetchProjects();
+            fetchAllTasks();
+          }}
+        />
+      )}
     </div>
   );
 }
