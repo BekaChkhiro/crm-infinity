@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/core/config/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -56,6 +57,7 @@ interface TeamMember {
 
 export default function Tasks() {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { taskId } = useParams();
@@ -155,7 +157,7 @@ export default function Tasks() {
       supabase.removeChannel(tasksChannel);
       clearInterval(pollingInterval);
     };
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
     // Remember last selected project
@@ -238,10 +240,17 @@ export default function Tasks() {
       const projectsWithTasks: ProjectWithTasks[] = await Promise.all(
         (projectsData || []).map(async (project) => {
           try {
-            const { data: tasksData, error: tasksError } = await supabase
+            let taskQuery = supabase
               .from('tasks')
               .select('*')
-              .eq('project_id', project.id)
+              .eq('project_id', project.id);
+            
+            // If user is not an admin, show tasks they created OR are assigned to
+            if (profile?.role !== 'admin' && user?.id) {
+              taskQuery = taskQuery.or(`created_by.eq.${user.id},assignee_id.eq.${user.id}`);
+            }
+            
+            const { data: tasksData, error: tasksError } = await taskQuery
               .order('created_at', { ascending: false });
 
             if (tasksError) {
@@ -316,10 +325,17 @@ export default function Tasks() {
   const fetchAllTasks = async () => {
     try {
       console.log('Fetching all tasks...');
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      // If user is not an admin, show tasks they created OR are assigned to
+      if (profile?.role !== 'admin' && user?.id) {
+        query = query.or(`created_by.eq.${user.id},assignee_id.eq.${user.id}`);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       console.log('Tasks fetched:', data?.length || 0);

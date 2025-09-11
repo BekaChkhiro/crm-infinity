@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/core/config/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -52,6 +53,7 @@ interface TeamMember {
 export default function ProjectDetails() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -169,7 +171,7 @@ export default function ProjectDetails() {
       supabase.removeChannel(tasksChannel);
       supabase.removeChannel(kanbanColumnsChannel);
     };
-  }, [id, user]);
+  }, [id, user, profile]);
 
   const fetchProject = async () => {
     try {
@@ -229,11 +231,17 @@ export default function ProjectDetails() {
 
   const fetchTasks = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false });
+        .eq('project_id', id);
+      
+      // If user is not an admin, show tasks they created OR are assigned to
+      if (profile?.role !== 'admin' && user?.id) {
+        query = query.or(`created_by.eq.${user.id},assignee_id.eq.${user.id}`);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setTasks((data || []) as Task[]);

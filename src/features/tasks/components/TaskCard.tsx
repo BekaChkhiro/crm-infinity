@@ -228,16 +228,23 @@ export function TaskCard({
           )}
 
           <div className="flex items-center justify-between">
-            {assigneeName && (
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(assigneeName)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-muted-foreground">{assigneeName}</span>
-              </div>
-            )}
+            <div className="flex flex-col space-y-1">
+              {assigneeName && (
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {getInitials(assigneeName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">{assigneeName}</span>
+                </div>
+              )}
+              {creatorName && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-muted-foreground">შემქმნელი: {creatorName}</span>
+                </div>
+              )}
+            </div>
             
             <div className="flex items-center space-x-1">
               <Button 
