@@ -17,6 +17,7 @@ import { createStatusMapping } from '@/features/kanban/utils/statusMapping';
 const taskFormSchema = z.object({
   title: z.string().min(1, 'სათაური აუცილებელია').max(255, 'სათაური უნდა იყოს 255 სიმბოლოზე ნაკლები'),
   description: z.string().optional(),
+  notes: z.string().optional(),
   status: z.string().min(1, 'Status is required'),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   assignee_id: z.string().optional(),
@@ -64,6 +65,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
     defaultValues: {
       title: task?.title || '',
       description: task?.description || '',
+      notes: task?.notes || '',
       status: task?.status || 'To Do', // Use fixed default here, will be updated by useEffect
       priority: task?.priority || 'medium',
       assignee_id: task?.assignee_id || 'unassigned',
@@ -77,6 +79,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
       form.reset({
         title: task.title,
         description: task.description || '',
+        notes: task.notes || '',
         status: task.status,
         priority: task.priority,
         assignee_id: task.assignee_id || 'unassigned',
@@ -90,6 +93,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
       form.reset({
         title: '',
         description: '',
+        notes: '',
         status: defaultStatus,
         priority: 'medium',
         assignee_id: 'unassigned',
@@ -176,6 +180,24 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                     <FormControl>
                       <Textarea 
                         placeholder="შეიყვანეთ დავალების აღწერა (არასავალდებულო)"
+                        className="min-h-[80px] resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">შენიშვნები</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="შეიყვანეთ შენიშვნები ამ დავალებაზე (არასავალდებულო)"
                         className="min-h-[80px] resize-none"
                         {...field}
                       />
@@ -401,6 +423,24 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
               <FormControl>
                 <Textarea 
                   placeholder="შეიყვანეთ დავალების აღწერა (არასავალდებულო)"
+                  className="min-h-[80px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>შენიშვნები</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="შეიყვანეთ შენიშვნები ამ დავალებაზე (არასავალდებულო)"
                   className="min-h-[80px]"
                   {...field}
                 />
