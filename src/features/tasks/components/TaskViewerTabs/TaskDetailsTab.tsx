@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog';
 import { Separator } from '@/shared/components/ui/separator';
-import { Calendar, Clock, User, FolderOpen, MoreVertical, Trash2, CheckCircle2, AlertCircle, Timer, Target } from 'lucide-react';
+import { Calendar, Clock, User, FolderOpen, MoreVertical, Trash2, CheckCircle2, AlertCircle, Timer, Target, DollarSign } from 'lucide-react';
 import { format, isAfter, isBefore, addDays } from 'date-fns';
 import { Task } from '../TaskCard';
 import { supabase } from '@/core/config/client';
@@ -491,6 +491,32 @@ export function TaskDetailsTab({ task, teamMembers, projectStatuses = [], onTask
                 validator={validators.due_date}
                 className="max-w-xs text-right"
                 instantSave={true}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Budget */}
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <DollarSign className="h-4 w-4" />
+              <span className="font-medium">ბიუჯეტი</span>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <InlineEditableField
+                type="number"
+                value={localTask.budget}
+                isEditing={editingField === 'budget'}
+                onChange={(value) => handleFieldUpdate('budget', value === '' ? null : parseFloat(value))}
+                onSave={(value) => saveField('budget', value === '' ? null : parseFloat(value))}
+                onCancel={handleCancelEdit}
+                onEdit={() => handleEditField('budget')}
+                validator={validators.budget}
+                className="max-w-xs text-right font-mono"
+                placeholder="0.00"
+                instantSave={true}
+                prefix="₾"
               />
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/shared/components/ui/alert-dialog';
-import { MoreVertical, Edit, Trash2, MessageSquare, Calendar, ChevronDown, ChevronRight, Users, Plus } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, MessageSquare, Calendar, ChevronDown, ChevronRight, Users, Plus, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { SubtaskList } from './SubtaskList';
 import { TaskComments } from './TaskComments';
@@ -35,6 +35,7 @@ export interface Task {
   parent_task_id?: string | null;
   is_subtask?: boolean;
   subtask_order?: number | null;
+  budget?: number | null;
 }
 
 interface TaskCardProps extends TaskCardClickHandler {
@@ -220,12 +221,21 @@ export function TaskCard({
             </Badge>
           </div>
 
-          {task.due_date && (
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3 mr-1" />
-              ვადა {format(new Date(task.due_date), 'MMM dd, yyyy')}
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {task.due_date && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3 mr-1" />
+                ვადა {format(new Date(task.due_date), 'MMM dd, yyyy')}
+              </div>
+            )}
+
+            {task.budget && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <DollarSign className="h-3 w-3 mr-1" />
+                ₾{task.budget.toFixed(2)}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="flex flex-col space-y-1">

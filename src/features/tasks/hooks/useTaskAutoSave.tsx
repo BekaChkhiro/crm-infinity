@@ -132,6 +132,14 @@ export function useTaskAutoSave({
       const validStatuses = ['todo', 'in-progress', 'review', 'done'];
       if (!validStatuses.includes(value)) return 'არასწორი სტატუსი';
       return null;
+    },
+
+    budget: (value: any) => {
+      if (value === null || value === undefined || value === '') return null;
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(numValue)) return 'ბიუჯეტი უნდა იყოს რიცხვი';
+      if (numValue < 0) return 'ბიუჯეტი უნდა იყოს დადებითი რიცხვი';
+      return null;
     }
   };
 

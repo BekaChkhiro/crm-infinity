@@ -9,7 +9,7 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Task } from './TaskCard';
-import { FolderOpen, Calendar, User, Star, Clock, Paperclip } from 'lucide-react';
+import { FolderOpen, Calendar, User, Star, Clock, Paperclip, DollarSign } from 'lucide-react';
 import { useGlobalTaskEdit } from '@/contexts/GlobalTaskEditContext';
 import { FileUpload, FileUploadItem } from '@/components/ui/file-upload';
 import { createStatusMapping } from '@/features/kanban/utils/statusMapping';
@@ -29,6 +29,14 @@ const taskFormSchema = z.object({
     return dueDate >= today;
   }, 'დასრულების თარიღი არ შეიძლება იყოს წარსულში'),
   project_id: z.string().optional(),
+  budget: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    },
+    z.number().min(0, 'ბიუჯეტი უნდა იყოს დადებითი რიცხვი').nullable().optional()
+  ),
 });
 
 type TaskFormData = z.infer<typeof taskFormSchema>;
@@ -71,6 +79,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
       assignee_id: task?.assignee_id || 'unassigned',
       due_date: task?.due_date || '',
       project_id: task?.project_id || defaultProjectId || '',
+      budget: task?.budget || null,
     },
   });
 
@@ -85,6 +94,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
         assignee_id: task.assignee_id || 'unassigned',
         due_date: task.due_date || '',
         project_id: task.project_id,
+        budget: task.budget || null,
       });
       setUploadedFiles([]);
     } else {
@@ -99,6 +109,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
         assignee_id: 'unassigned',
         due_date: '',
         project_id: defaultProjectId || '',
+        budget: null,
       });
       setUploadedFiles([]);
     }
@@ -136,8 +147,8 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
   if (typeof open === 'boolean') {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] p-0">
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <DialogContent className="sm:max-w-[500px] p-0 max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 {task ? <Clock className="h-4 w-4 text-blue-600" /> : <Star className="h-4 w-4 text-blue-600" />}
@@ -145,8 +156,8 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
               {task ? 'დავალების რედაქტირება' : 'ახალი დავალების შექმნა'}
             </DialogTitle>
           </DialogHeader>
-          
-          <div className="px-6 py-4">
+
+          <div className="px-6 py-4 overflow-y-auto flex-1">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               <FormField
@@ -305,7 +316,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                 />
               )}
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="assignee_id"
@@ -340,6 +351,40 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                       <FormLabel>დასრულების თარიღი</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        ბიუჯეტი
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                              field.onChange(value);
+                            }}
+                            className="pl-6"
+                          />
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                            ₾
+                          </span>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -516,7 +561,7 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="assignee_id"
@@ -551,6 +596,40 @@ export function TaskForm({ open, onOpenChange, onSubmit, task, teamMembers = [],
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="budget"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  Budget
+                </FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                        field.onChange(value);
+                      }}
+                      className="pl-6"
+                    />
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                      ₾
+                    </span>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { MoreVertical, Plus, GripVertical } from 'lucide-react';
+import { MoreVertical, Plus, GripVertical, DollarSign } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu';
 import { KanbanCard } from './KanbanCard';
 import { Task } from './TaskCard';
@@ -45,6 +45,15 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // Calculate total budget for tasks in this column
+  const calculateColumnBudget = (): number => {
+    return tasks.reduce((sum, task) => {
+      return sum + (task.budget || 0);
+    }, 0);
+  };
+
+  const columnBudgetTotal = calculateColumnBudget();
+
   const handleTaskDragOver = (e: React.DragEvent) => {
     // Only handle task drops, not column drops
     if (e.dataTransfer.types.includes('text/plain')) {
@@ -72,54 +81,70 @@ export function KanbanColumn({
   return (
     <div className={`flex flex-col h-full min-w-[300px] w-80 group ${isDragging ? 'pointer-events-none' : ''}`}>
       <Card className={`flex-1 flex flex-col transition-all ${isDragging ? 'opacity-50' : ''}`}>
-        <CardHeader 
+        <CardHeader
           className="pb-3 cursor-grab active:cursor-grabbing"
           draggable
           onDragStart={(e) => onColumnDragStart?.(e, column)}
           onDragEnd={onColumnDragEnd}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {/* Column Drag Handle */}
-              <div className="opacity-60 hover:opacity-100 transition-opacity">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {/* Column Drag Handle */}
+                <div className="opacity-60 hover:opacity-100 transition-opacity">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: column.color }}
+                />
+                <CardTitle className="text-sm font-medium">{column.name}</CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {tasks.length}
+                </Badge>
               </div>
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: column.color }}
-              />
-              <CardTitle className="text-sm font-medium">{column.name}</CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {tasks.length}
-              </Badge>
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => onCreateTask(column.id)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEditColumn?.(column)}>
+                      Edit Column
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => onDeleteColumn?.(column.id)}
+                    >
+                      Delete Column
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 w-7 p-0"
-                onClick={() => onCreateTask(column.id)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEditColumn?.(column)}>
-                    Edit Column
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={() => onDeleteColumn?.(column.id)}
-                  >
-                    Delete Column
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+
+            {/* Budget Total Row */}
+            <div className="flex items-center gap-2 text-xs pl-9">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <DollarSign className="h-3 w-3" />
+                <span className="font-medium">ბიუჯეტი:</span>
+              </div>
+              <span className={`font-semibold font-mono ${columnBudgetTotal > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                ₾{columnBudgetTotal.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
             </div>
           </div>
         </CardHeader>

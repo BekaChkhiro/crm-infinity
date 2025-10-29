@@ -6,7 +6,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
-import { GripVertical, Edit, Trash2, Plus } from 'lucide-react';
+import { GripVertical, Edit, Trash2, Plus, DollarSign } from 'lucide-react';
 import { useToast } from '@/shared/hooks/use-toast';
 import { supabase } from '@/core/config/client';
 
@@ -17,6 +17,13 @@ interface KanbanColumn {
   color: string;
   status_value: string;
   project_id: string;
+}
+
+interface Task {
+  id: string;
+  status: string;
+  budget: number | null;
+  kanban_column: string | null;
 }
 
 interface ColumnSettingsDialogProps {
@@ -51,6 +58,7 @@ export function ColumnSettingsDialog({
   onSuccess 
 }: ColumnSettingsDialogProps) {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -58,6 +66,7 @@ export function ColumnSettingsDialog({
   useEffect(() => {
     if (open) {
       fetchColumns();
+      fetchTasks();
     }
   }, [open, projectId]);
 
@@ -82,6 +91,27 @@ export function ColumnSettingsDialog({
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('id, status, budget, kanban_column')
+        .eq('project_id', projectId);
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (err: unknown) {
+      console.error('Error fetching tasks:', err);
+    }
+  };
+
+  // Calculate budget sum for a column
+  const getColumnBudget = (columnName: string): number => {
+    return tasks
+      .filter(task => task.status === columnName || task.kanban_column === columnName)
+      .reduce((sum, task) => sum + (task.budget || 0), 0);
   };
 
   const updateColumn = (columnId: string, updates: Partial<KanbanColumn>) => {
@@ -206,11 +236,23 @@ export function ColumnSettingsDialog({
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                    <div 
-                      className="w-4 h-4 rounded-full" 
+                    <div
+                      className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: column.color }}
                     />
-                    <span className="font-medium">{column.name}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">{column.name}</span>
+                      <div className="flex items-center gap-1 text-xs">
+                        <DollarSign className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">ბიუჯეტი:</span>
+                        <span className={`font-mono font-medium ${getColumnBudget(column.name) > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          ₾{getColumnBudget(column.name).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
+                        </span>
+                      </div>
+                    </div>
                     <Badge variant="secondary" className="ml-auto">
                       Position {column.position}
                     </Badge>

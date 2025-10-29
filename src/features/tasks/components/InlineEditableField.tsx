@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 
 interface InlineEditableFieldProps {
   value: any;
-  type: 'text' | 'textarea' | 'select' | 'date' | 'user' | 'status' | 'priority';
+  type: 'text' | 'textarea' | 'select' | 'date' | 'user' | 'status' | 'priority' | 'number';
   label?: string;
   options?: Array<{ value: string; label: string; icon?: React.ReactNode; color?: string }>;
   teamMembers?: Array<{ id: string; name: string; email?: string }>;
@@ -24,6 +24,7 @@ interface InlineEditableFieldProps {
   displayValue?: string;
   validator?: (value: any) => string | null;
   instantSave?: boolean; // New prop to control instant save behavior
+  prefix?: string; // For currency symbols like ₾ or $
 }
 
 export function InlineEditableField({
@@ -41,7 +42,8 @@ export function InlineEditableField({
   className = '',
   displayValue,
   validator,
-  instantSave = false
+  instantSave = false,
+  prefix
 }: InlineEditableFieldProps) {
   const [editValue, setEditValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
@@ -218,6 +220,15 @@ export function InlineEditableField({
           <span className="text-muted-foreground">თარიღი მითითებული არ არის</span>
         );
 
+      case 'number':
+        return value !== null && value !== undefined ? (
+          <span className="font-medium font-mono">
+            {prefix}{typeof value === 'number' ? value.toFixed(2) : value}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">არ არის</span>
+        );
+
       case 'textarea':
         return value ? (
           <p className="whitespace-pre-wrap leading-relaxed">
@@ -336,6 +347,30 @@ export function InlineEditableField({
             onKeyDown={handleKeyDown}
             disabled={isSaving}
           />
+        );
+
+      case 'number':
+        return (
+          <div className="relative">
+            {prefix && (
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {prefix}
+              </span>
+            )}
+            <Input
+              ref={inputRef}
+              type="number"
+              step="0.01"
+              min="0"
+              value={editValue ?? ''}
+              onChange={(e) => setEditValue(e.target.value === '' ? null : e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
+              placeholder={placeholder}
+              disabled={isSaving}
+              className={prefix ? 'pl-8' : ''}
+            />
+          </div>
         );
 
       default:
