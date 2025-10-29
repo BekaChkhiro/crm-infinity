@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
-import { Calendar, AlertTriangle } from 'lucide-react';
+import { Calendar, AlertTriangle, DollarSign } from 'lucide-react';
 import { format, isAfter, isBefore, addDays } from 'date-fns';
 import { Task } from './TaskCard';
 
@@ -90,19 +90,28 @@ export function KanbanCard({ task, assigneeName, onEdit, onTaskClick }: KanbanCa
           )}
         </div>
 
-        {task.due_date && (
-          <div className={`flex items-center text-xs ${dueDateStatus?.color || 'text-muted-foreground'}`}>
-            {dueDateStatus?.status === 'overdue' && (
-              <AlertTriangle className="h-3 w-3 mr-1" />
-            )}
-            <Calendar className="h-3 w-3 mr-1" />
-            <span>
-              {dueDateStatus?.status === 'overdue' && 'Overdue: '}
-              {dueDateStatus?.status === 'due-today' && 'Due today: '}
-              {format(new Date(task.due_date), 'MMM dd')}
+        <div className="flex items-center justify-between gap-2">
+          {task.due_date && (
+            <div className={`flex items-center text-xs ${dueDateStatus?.color || 'text-muted-foreground'}`}>
+              {dueDateStatus?.status === 'overdue' && (
+                <AlertTriangle className="h-3 w-3 mr-1" />
+              )}
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>
+                {dueDateStatus?.status === 'overdue' && 'Overdue: '}
+                {dueDateStatus?.status === 'due-today' && 'Due today: '}
+                {format(new Date(task.due_date), 'MMM dd')}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center text-xs ml-auto">
+            <DollarSign className={`h-3 w-3 mr-1 ${task.budget && task.budget > 0 ? 'text-green-600' : 'text-muted-foreground'}`} />
+            <span className={`font-mono font-semibold ${task.budget && task.budget > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+              ₾{task.budget ? task.budget.toFixed(2) : '0.00'}
             </span>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

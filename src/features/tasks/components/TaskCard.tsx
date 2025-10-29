@@ -221,7 +221,7 @@ export function TaskCard({
             </Badge>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {task.due_date && (
               <div className="flex items-center text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3 mr-1" />
@@ -229,12 +229,12 @@ export function TaskCard({
               </div>
             )}
 
-            {task.budget && (
-              <div className="flex items-center text-xs text-muted-foreground">
-                <DollarSign className="h-3 w-3 mr-1" />
-                ₾{task.budget.toFixed(2)}
-              </div>
-            )}
+            <div className="flex items-center text-xs">
+              <DollarSign className={`h-3 w-3 mr-1 ${task.budget && task.budget > 0 ? 'text-green-600' : 'text-muted-foreground'}`} />
+              <span className={`font-mono font-medium ${task.budget && task.budget > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                ₾{task.budget ? task.budget.toFixed(2) : '0.00'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
